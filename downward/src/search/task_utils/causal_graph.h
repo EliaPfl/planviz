@@ -110,6 +110,8 @@ public:
     const std::vector<int> &get_predecessors(int var) const {
         return predecessors[var];
     }
+
+    void export_successors(const TaskProxy &task_proxy) const;
 };
 
 /* Create or retrieve a causal graph from cache. If causal graphs are created

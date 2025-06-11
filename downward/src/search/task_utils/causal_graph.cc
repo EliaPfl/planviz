@@ -11,6 +11,10 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <fstream>
+#include <filesystem>
+
+
 using namespace std;
 
 /*
@@ -210,4 +214,29 @@ const CausalGraph &get_causal_graph(const AbstractTask *task) {
     }
     return *causal_graph_cache[task];
 }
+
+void CausalGraph::export_successors(const TaskProxy &task_proxy) const
+    {
+        std::ofstream out("causal_graph.json");
+        out << "[";
+        for (unsigned long i = 0; i < successors.size(); ++i)
+        {
+            out << "{ \"data\": { \"id\": \"" << i << "\", \"name\": \"" << task_proxy.get_variables()[i].get_fact(0).get_name() << "\"}}," << "\n";
+        }
+        for (unsigned long i = 0; i < successors.size(); ++i)
+        {
+            for (int j : successors[i])
+            {
+                out << "{ \"data\": { \"id\": \"" << i << "_" << j << "\", \"source\": \"" << i << "\", \"target\": \"" << j << "\" } }," << "\n";
+                // out << task_proxy.get_variables()[i].get_fact(0).get_name() << " -> " << task_proxy.get_variables()[j].get_fact(0).get_name() << ";\n";
+            }
+        }
+        out << "]\n";
+        out.close();
+        std::cout << "Causal graph exported to causal_graph.json" << std::endl;
+        // print full path to file
+        // std::cout << "Full path: " << std::filesystem::absolute("causal_graph.json") << std::endl;
+
+        exit(0);
+    }
 }

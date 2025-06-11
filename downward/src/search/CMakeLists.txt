@@ -526,6 +526,19 @@ create_fast_downward_library(
 )
 
 create_fast_downward_library(
+    NAME graph_only_search
+    HELP "Graph-only search"
+    SOURCES
+        search_algorithms/graph_only_search
+    DEPENDS
+        g_evaluator
+        ordered_set
+        pref_evaluator
+        search_common
+        successor_generator
+)
+
+create_fast_downward_library(
     NAME iterated_search
     HELP "Iterated search"
     SOURCES
