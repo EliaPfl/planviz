@@ -4,6 +4,7 @@
 
 #include "../utils/logging.h"
 #include "../utils/timer.h"
+#include "../utils/json.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -16,6 +17,7 @@
 
 
 using namespace std;
+using json = nlohmann::json;
 
 /*
   We only want to create one causal graph per task, so they are cached globally.
@@ -216,27 +218,42 @@ const CausalGraph &get_causal_graph(const AbstractTask *task) {
 }
 
 void CausalGraph::export_successors(const TaskProxy &task_proxy) const
-    {
-        std::ofstream out("causal_graph.json");
-        out << "[";
-        for (unsigned long i = 0; i < successors.size(); ++i)
-        {
-            out << "{ \"data\": { \"id\": \"" << i << "\", \"name\": \"" << task_proxy.get_variables()[i].get_fact(0).get_name() << "\"}}," << "\n";
+    {   
+        json nodes = json::array();
+        json edges = json::array();
+
+        // Nodes
+        for (unsigned long i = 0; i < successors.size(); ++i) {
+            json node;
+            node["data"] = {
+                {"id", std::to_string(i)},
+                {"name", task_proxy.get_variables()[i].get_fact(0).get_name()}
+            };
+            nodes.push_back(node);
         }
-        for (unsigned long i = 0; i < successors.size(); ++i)
-        {
-            for (int j : successors[i])
-            {
-                out << "{ \"data\": { \"id\": \"" << i << "_" << j << "\", \"source\": \"" << i << "\", \"target\": \"" << j << "\" } }," << "\n";
-                // out << task_proxy.get_variables()[i].get_fact(0).get_name() << " -> " << task_proxy.get_variables()[j].get_fact(0).get_name() << ";\n";
+
+        // Edges
+        for (unsigned long i = 0; i < successors.size(); ++i) {
+            for (int j : successors[i]) {
+                json edge;
+                edge["data"] = {
+                    {"id", std::to_string(i) + "_" + std::to_string(j)},
+                    {"source", std::to_string(i)},
+                    {"target", std::to_string(j)}
+                };
+                edges.push_back(edge);
             }
         }
-        out << "]\n";
-        out.close();
-        std::cout << "Causal graph exported to causal_graph.json" << std::endl;
-        // print full path to file
-        // std::cout << "Full path: " << std::filesystem::absolute("causal_graph.json") << std::endl;
 
-        exit(0);
+        // full JSON
+        json graph_json;
+        graph_json["elements"] = {
+            {"nodes", nodes},
+            {"edges", edges}
+        };
+
+        std::ofstream out("causal_graph.json");
+        out << graph_json.dump(2);
+        out.close();
     }
 }
