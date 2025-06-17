@@ -12,7 +12,7 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss(),
   ],
-  server:{
+  server: {
     port: 5000,
     proxy: {
       '/api': {
