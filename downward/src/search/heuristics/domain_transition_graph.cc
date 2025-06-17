@@ -6,7 +6,11 @@
 #include <cassert>
 #include <iostream>
 
+#include "../utils/json.hpp"
+#include <fstream>
+
 using namespace std;
+using json = nlohmann::json;
 
 namespace domain_transition_graph {
 DTGFactory::DTGFactory(const TaskProxy &task_proxy,
@@ -297,4 +301,45 @@ DomainTransitionGraph::DomainTransitionGraph(int var_index, int node_count) {
         nodes.push_back(ValueNode(this, value));
     last_helpful_transition_extraction_time = -1;
 }
+
+void DomainTransitionGraph::export_graph() {
+    json jnodes = json::array();
+    json jedges = json::array();
+
+    for(const ValueNode &node : this->nodes) {
+        // Nodes
+        json jnode;
+        jnode["data"] = {
+                {"id", std::to_string(node.value)},
+                {"name", std::to_string(node.value)} //TODO: fix name
+            };
+        jnodes.push_back(jnode);
+        
+        // Edges
+        for(const ValueTransition &vT : node.transitions) {
+            json jedge;
+            jedge["data"] = {
+                    {"id", std::to_string(node.value) + "_" + std::to_string(vT.target->value)},
+                    {"source", std::to_string(node.value)},
+                    {"target", std::to_string(vT.target->value)}
+                };
+                jedges.push_back(jedge);
+        }
+    }
+
+    
+
+    // export full JSON
+    json graph_json;
+    graph_json["elements"] = {
+        {"nodes", jnodes},
+        {"edges", jedges}
+    };
+
+    std::ofstream out("dtg" + std::to_string(var) + ".json");
+    out << graph_json.dump(2);
+    out.close();
+
+}
+
 }

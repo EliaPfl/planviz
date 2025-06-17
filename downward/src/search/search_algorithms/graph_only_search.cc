@@ -6,8 +6,11 @@
 
 #include "../plugins/plugin.h"
 
+#include "../heuristics/domain_transition_graph.h"
+
 
 using namespace std;
+using namespace domain_transition_graph;
 
 namespace graph_only_search {
 
@@ -23,12 +26,24 @@ GraphOnlySearch::GraphOnlySearch(
       current_eval_context(state_registry.get_initial_state(), &statistics) {}
 
 void GraphOnlySearch::initialize() {
+    using DTGs = std::vector<std::unique_ptr<DomainTransitionGraph>>;
+
     log << "Starting GraphOnlySearch for structure analysis." << endl;
 
     State initial_state = state_registry.get_initial_state();
     current_eval_context = EvaluationContext(initial_state, &statistics);
 
+    /// get causal graph
     task_proxy.get_causal_graph().export_successors(task_proxy);
+
+    // get domain transition graphs
+    function<bool(int, int)> pruning_condition =
+        [](int dtg_var, int cond_var) {return false;};
+    DTGFactory factory(task_proxy, false, pruning_condition);
+    DTGs transition_graphs = factory.build_dtgs();
+    for(const auto &dtg : transition_graphs) {
+        dtg->export_graph();
+    }
 }
 
 
