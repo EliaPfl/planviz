@@ -132,7 +132,7 @@ class DomainTransitionGraph {
     DomainTransitionGraph(const DomainTransitionGraph &other); // copying forbidden
 public:
     DomainTransitionGraph(int var_index, int node_count);
-    void export_graph();
+    void export_graph(const State &initial_state, const GoalsProxy &goal);
 };
 }
 
