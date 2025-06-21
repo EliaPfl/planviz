@@ -302,30 +302,30 @@ DomainTransitionGraph::DomainTransitionGraph(int var_index, int node_count) {
     last_helpful_transition_extraction_time = -1;
 }
 
-void DomainTransitionGraph::export_graph(const State &initial_state, const GoalsProxy &goal) {
+void DomainTransitionGraph::export_graph(const State &initial_state, const GoalsProxy &goals, const OperatorsProxy &ops, const VariablesProxy &vars) const {
     json jnodes = json::array();
     json jedges = json::array();
 
     
-
     for(const ValueNode &node : this->nodes) {
-
+        
         std::unordered_map<int, int> goal_map;
-        for (FactProxy g : goal) {
+        for (FactProxy g : goals) {
             goal_map[g.get_variable().get_id()] = g.get_value();
         }
+
         // Nodes
         json jnode;
         jnode["data"] = {
                 {"id", std::to_string(node.value)},
-                {"name", std::to_string(node.value)} //TODO: fix name
+                {"name", vars[var].get_fact(node.value).get_name()}
             };
         if(node.value == initial_state[var].get_value()) {
-            jnode["data"]["class"] += "init ";
+            jnode["classes"] += "init";
         }
         // Mark goal nodes
         if (goal_map.count(var) && goal_map[var] == node.value) {
-            jnode["data"]["class"] += "goal ";
+            jnode["classes"] += "goal";
         }
         
         jnodes.push_back(jnode);
@@ -339,7 +339,7 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const Goals
                     {"target", std::to_string(vT.target->value)}
                 };
             for(const ValueTransitionLabel &label : vT.labels) {
-                jedge["data"]["label"] += std::to_string(label.op_id);
+                jedge["data"]["label"] += ops[label.op_id].get_name();
             }
             jedges.push_back(jedge);
         }
