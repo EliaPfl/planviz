@@ -4,35 +4,37 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const problemFile = ref(null);
-const domainFile = ref(null);
 
-function handleFileInput(event, type) {
-    const file = event.target.files[0];
-    if (file && file.name.endsWith('.pddl')) {
-        if (type === 'problem') {
-            problemFile.value = file;
-            const problemLabel = document.getElementById('uploadedProblem');
-            problemLabel.textContent = file.name || 'Problem PDDL file selected';
-        } else if (type === 'domain') {
-            domainFile.value = file;
-            const domainLabel = document.getElementById('uploadedDomain');
-            domainLabel.textContent = file.name || 'Domain PDDL file selected';
+const fileInput = ref([]);
+
+function handleFileInput(event) {
+    if (!event.target.files || event.target.files.length === 0) {
+        alert('No file selected');
+        return;
+    }
+    for (let i = 0; i < event.target.files.length; i++) {
+        const file = event.target.files[i];
+        if (!file.name.endsWith('.pddl')) {
+            alert('Please select a valid PDDL file');
+            return;
         }
-    } else {
-        alert('Please select a valid PDDL file');
+        fileInput.value.push(file);
     }
 }
 
 function handleSubmit() {
-    if (!problemFile.value || !domainFile.value) {
-        alert('Please select both problem and domain files before submitting');
+    if (!fileInput.value || fileInput.value.length === 0) {
+        alert('Please select at least one file to upload');
+        return;
+    } else if (fileInput.value.length > 2) {
+        alert('You can only upload a maximum of 2 files');
         return;
     }
 
     const formData = new FormData();
-    formData.append('problem', problemFile.value);
-    formData.append('domain', domainFile.value);
+    fileInput.value.forEach(file => {
+        formData.append('files', file);
+    });
 
     // axios.post('/api/upload', formData, {
     //     headers: {
@@ -46,47 +48,41 @@ function handleSubmit() {
     router.push('/causal');
 }
 
+function removeFile(index) {
+    fileInput.value.splice(index, 1);
+}
 
 </script>
 
 
 <template>
     <div
-        class="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] p-6 bg-gray-700 rounded-none shadow-inner overflow-auto">
-        <form @submit.prevent="handleSubmit" class="flex flex-col h-full">
-            <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="flex flex-col">
-                    <label for="problemInput" class="text-lg font-medium text-gray-200 mb-2 text-center">Problem
-                        PDDL</label>
-                    <label for="problemInput"
-                        class="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 cursor-pointer hover:border-blue-400 transition-colors">
-                        <i class="pi pi-upload text-4xl text-gray-200"></i>
-                        <span id="uploadedProblem" class="text-gray-300"></span>
-                        <input @change="handleFileInput($event, 'problem')" id="problemInput" name="problem" type="file"
-                            accept=".pddl" class="sr-only" />
-                    </label>
-                </div>
+        class="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] p-6 bg-gray-700 shadow-inner overflow-auto flex flex-col items-center">
+        <div class="w-full max-w-2xl mx-auto p-6 bg-gray-800 text-gray-50 rounded-lg shadow-md mb-8">
+            <h2 class="text-lg font-semibold mb-4">Uploaded Files</h2>
+            <ul class="divide-y divide-gray-700">
+                <li v-for="(file, index) in fileInput" :key="index" class="flex justify-between items-center py-2">
+                    <span>{{ file.name }}</span>
+                    <i @click="removeFile(index)" class="pi pi-times cursor-pointer hover:text-red-400"></i>
+                </li>
+            </ul>
+        </div>
 
-                <div class="flex flex-col">
-                    <label for="domainInput" class="text-lg font-medium text-gray-200 mb-2  text-center">Domain
-                        PDDL</label>
-                    <label for="domainInput"
-                        class="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-gray-500 rounded-lg p-4 cursor-pointer hover:border-blue-400 transition-colors">
-                        <i class="pi pi-upload text-4xl text-gray-200"></i>
-                        <span id="uploadedDomain" class="text-gray-300"></span>
-                        <input @change="handleFileInput($event, 'domain')" id="domainInput" name="domain" type="file"
-                            accept=".pddl" class="sr-only" />
-                    </label>
-                </div>
-            </div>
+        <form @submit.prevent="handleSubmit" class="w-full max-w-2xl mx-auto flex flex-col space-y-6">
+            <label for="domainInput" class="w-full h-64 flex flex-col items-center justify-center p-6
+               border-2 border-dashed border-gray-600 rounded-lg
+               hover:border-blue-400 transition-colors">
+                <i class="pi pi-upload text-5xl text-gray-400 mb-4"></i>
+                <input id="domainInput" name="domain" type="file" accept=".pddl" multiple class="sr-only"
+                    @change="handleFileInput($event, 'domain')" />
+            </label>
 
             <button type="submit"
-                class="mt-6 w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg shadow-md transition-colors">
+                class="w-full px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg shadow transition-colors">
                 Submit
             </button>
         </form>
     </div>
-
 </template>
 
 
