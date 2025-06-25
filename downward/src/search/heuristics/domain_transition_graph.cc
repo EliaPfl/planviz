@@ -302,18 +302,12 @@ DomainTransitionGraph::DomainTransitionGraph(int var_index, int node_count) {
     last_helpful_transition_extraction_time = -1;
 }
 
-void DomainTransitionGraph::export_graph(const State &initial_state, const GoalsProxy &goals, const OperatorsProxy &ops, const VariablesProxy &vars) const {
+void DomainTransitionGraph::export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, const OperatorsProxy &ops, const VariablesProxy &vars) const {
     json jnodes = json::array();
     json jedges = json::array();
 
     
     for(const ValueNode &node : this->nodes) {
-        
-        std::unordered_map<int, int> goal_map;
-        for (FactProxy g : goals) {
-            goal_map[g.get_variable().get_id()] = g.get_value();
-        }
-
         // Nodes
         json jnode;
         jnode["data"] = {
@@ -324,7 +318,7 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const Goals
             jnode["classes"] += "init";
         }
         // Mark goal nodes
-        if (goal_map.count(var) && goal_map[var] == node.value) {
+        if(goal_map.count(var) && goal_map.at(var) == node.value) {
             jnode["classes"] += "goal";
         }
         

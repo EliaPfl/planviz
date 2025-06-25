@@ -31,14 +31,19 @@ void GraphOnlySearch::initialize() {
     log << "Starting GraphOnlySearch for structure analysis." << endl;
 
     State initial_state = state_registry.get_initial_state();
-    GoalsProxy goal = task_proxy.get_goals();
+    GoalsProxy goals = task_proxy.get_goals();
     OperatorsProxy ops = task_proxy.get_operators();
     VariablesProxy vars = task_proxy.get_variables();
+
+    std::unordered_map<int, int> goal_map;
+        for (FactProxy g : goals) {
+            goal_map[g.get_variable().get_id()] = g.get_value();
+        }
 
     current_eval_context = EvaluationContext(initial_state, &statistics);
 
     /// get causal graph
-    task_proxy.get_causal_graph().export_successors(task_proxy);
+    task_proxy.get_causal_graph().export_successors(initial_state, goal_map, ops, vars);
     log << "Causal graph exported." << endl;
 
     // get domain transition graphs
@@ -47,7 +52,7 @@ void GraphOnlySearch::initialize() {
     DTGFactory factory(task_proxy, false, pruning_condition);
     DTGs transition_graphs = factory.build_dtgs();
     for(const auto &dtg : transition_graphs) {
-        dtg->export_graph(initial_state, goal, ops, vars);
+        dtg->export_graph(initial_state, goal_map, ops, vars);
     }
     const State &init_state = task_proxy.get_initial_state();
     log << "Domain transition graphs exported." << endl;
