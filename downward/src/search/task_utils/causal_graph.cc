@@ -5,6 +5,7 @@
 #include "../utils/logging.h"
 #include "../utils/timer.h"
 #include "../utils/json.hpp"
+#include "../algorithms/sccs.h"
 
 #include <algorithm>
 #include <cassert>
@@ -217,18 +218,40 @@ const CausalGraph &get_causal_graph(const AbstractTask *task) {
     return *causal_graph_cache[task];
 }
 
-void CausalGraph::export_successors(const TaskProxy &task_proxy) const
+void CausalGraph::export_successors(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+    const OperatorsProxy &ops, const VariablesProxy &vars) const
     {   
         json nodes = json::array();
         json edges = json::array();
+
+        // scc
+        auto sccs = sccs::compute_maximal_sccs(successors);
+        std::vector<int> scc_ids(successors.size(), -1); //maps Node ID to SCC ID
+        for(unsigned long i = 0; i < sccs.size(); ++i) {
+            for (int node : sccs[i]) {
+                scc_ids[node] = i;
+            }
+        }
+
 
         // Nodes
         for (unsigned long i = 0; i < successors.size(); ++i) {
             json node;
             node["data"] = {
                 {"id", std::to_string(i)},
-                {"name", task_proxy.get_variables()[i].get_fact(0).get_name()}
+                {"name", vars[i].get_fact(0).get_name()},
+                {"scc_id", scc_ids[i]}
             };
+            // Domain data
+            for (int j = 0; j < vars[i].get_domain_size(); ++j) {
+                node["data"]["domain"][j] = vars[i].get_fact(j).get_name();
+            }
+            // Start and goal values
+            node["data"]["start"] = initial_state[i].get_value();
+            if(goal_map.count(i)) {
+                node["data"]["goal"] = goal_map.at(i);
+            }
+
             nodes.push_back(node);
         }
 
@@ -250,6 +273,10 @@ void CausalGraph::export_successors(const TaskProxy &task_proxy) const
         graph_json["elements"] = {
             {"nodes", nodes},
             {"edges", edges}
+        };
+        graph_json["metadata"] = {
+            {"num_variables", successors.size()},
+            {"num_sccs", sccs.size()}
         };
 
         std::ofstream out("causal_graph.json");

@@ -51,11 +51,16 @@
 */
 
 #include <vector>
+#include <unordered_map>
 
 typedef std::vector<std::vector<int>> IntRelation;
 
 class AbstractTask;
 class TaskProxy;
+class GoalsProxy;
+class OperatorsProxy;
+class VariablesProxy;
+class State;
 
 namespace causal_graph {
 class CausalGraph {
@@ -111,7 +116,8 @@ public:
         return predecessors[var];
     }
 
-    void export_successors(const TaskProxy &task_proxy) const;
+    void export_successors(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+      const OperatorsProxy &ops, const VariablesProxy &varsy) const;
 };
 
 /* Create or retrieve a causal graph from cache. If causal graphs are created
