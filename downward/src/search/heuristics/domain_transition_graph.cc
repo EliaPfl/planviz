@@ -302,7 +302,8 @@ DomainTransitionGraph::DomainTransitionGraph(int var_index, int node_count) {
     last_helpful_transition_extraction_time = -1;
 }
 
-void DomainTransitionGraph::export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, const OperatorsProxy &ops, const VariablesProxy &vars) const {
+void DomainTransitionGraph::export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+    const OperatorsProxy &ops, const VariablesProxy &vars, const fs::path &output_path) const {
     json jnodes = json::array();
     json jedges = json::array();
 
@@ -347,7 +348,7 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const std::
         {"edges", jedges}
     };
 
-    std::ofstream out("dtg_" + std::to_string(var) + ".json");
+    std::ofstream out(output_path / ("dtg_" + std::to_string(var) + ".json"));
     out << graph_json.dump(2);
     out.close();
 

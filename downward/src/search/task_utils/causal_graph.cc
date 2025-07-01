@@ -219,7 +219,7 @@ const CausalGraph &get_causal_graph(const AbstractTask *task) {
 }
 
 void CausalGraph::export_successors(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
-    const OperatorsProxy &ops, const VariablesProxy &vars) const
+    const OperatorsProxy &ops, const VariablesProxy &vars, const fs::path &output_path) const
     {   
         json nodes = json::array();
         json edges = json::array();
@@ -279,7 +279,7 @@ void CausalGraph::export_successors(const State &initial_state, const std::unord
             {"num_sccs", sccs.size()}
         };
 
-        std::ofstream out("causal_graph.json");
+        std::ofstream out(output_path / "causal_graph.json");
         out << graph_json.dump(2);
         out.close();
     }
