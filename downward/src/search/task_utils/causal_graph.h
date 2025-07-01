@@ -52,8 +52,10 @@
 
 #include <vector>
 #include <unordered_map>
+#include <filesystem>
 
 typedef std::vector<std::vector<int>> IntRelation;
+namespace fs = std::filesystem;
 
 class AbstractTask;
 class TaskProxy;
@@ -117,7 +119,7 @@ public:
     }
 
     void export_successors(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
-      const OperatorsProxy &ops, const VariablesProxy &varsy) const;
+      const OperatorsProxy &ops, const VariablesProxy &varsy, const fs::path &output_path) const;
 };
 
 /* Create or retrieve a causal graph from cache. If causal graphs are created

@@ -15,14 +15,14 @@ using namespace domain_transition_graph;
 namespace graph_only_search {
 
 GraphOnlySearch::GraphOnlySearch(
-    const std::shared_ptr<Evaluator> &h,
+    const std::string &output_filepath,
     OperatorCost cost_type,
     int bound,
     double max_time,
     const std::string &description,
     utils::Verbosity verbosity)
     : SearchAlgorithm(cost_type, bound, max_time, description, verbosity),
-      evaluator(h),
+      output_path(output_filepath),
       current_eval_context(state_registry.get_initial_state(), &statistics) {}
 
 void GraphOnlySearch::initialize() {
@@ -43,7 +43,7 @@ void GraphOnlySearch::initialize() {
     current_eval_context = EvaluationContext(initial_state, &statistics);
 
     /// get causal graph
-    task_proxy.get_causal_graph().export_successors(initial_state, goal_map, ops, vars);
+    task_proxy.get_causal_graph().export_successors(initial_state, goal_map, ops, vars, output_path);
     log << "Causal graph exported." << endl;
 
     // get domain transition graphs
@@ -52,10 +52,10 @@ void GraphOnlySearch::initialize() {
     DTGFactory factory(task_proxy, false, pruning_condition);
     DTGs transition_graphs = factory.build_dtgs();
     for(const auto &dtg : transition_graphs) {
-        dtg->export_graph(initial_state, goal_map, ops, vars);
+        dtg->export_graph(initial_state, goal_map, ops, vars, output_path);
     }
     const State &init_state = task_proxy.get_initial_state();
-    log << "Domain transition graphs exported." << endl;
+    log << "Domain transition graphs exported to " << output_path << endl;
 }
 
 
@@ -77,17 +77,23 @@ class GraphOnlySearchFeature
 public:
     GraphOnlySearchFeature() : TypedFeature("graph_only") {
         document_title("Graph Only Analysis");
-        document_synopsis("Expands the reachable state space for structural analysis, then terminates.");
+        document_synopsis("Exports causal and domain transition graphs, then exits.");
 
-        add_option<std::shared_ptr<Evaluator>>("h", "heuristic evaluator for tracking");
+        add_option<std::string>("output", "Path to write analysis summary file (optional)");
         add_search_algorithm_options_to_feature(*this, "graph_only");
     }
 
     virtual std::shared_ptr<GraphOnlySearch>
     create_component(const plugins::Options &opts) const override {
+        const string filepath = opts.get<std::string>("output");
+        auto args = get_search_algorithm_arguments_from_options(opts);
         return plugins::make_shared_from_arg_tuples<GraphOnlySearch>(
-            opts.get<std::shared_ptr<Evaluator>>("h"),
-            get_search_algorithm_arguments_from_options(opts)
+            filepath,
+            std::get<0>(args), // cost_type
+            std::get<1>(args), // bound
+            std::get<2>(args), // max_time
+            std::get<3>(args), // description
+            std::get<4>(args)  // verbosity
         );
     }
 };

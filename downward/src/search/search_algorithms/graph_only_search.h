@@ -6,9 +6,14 @@
 #include "../task_utils/successor_generator.h"
 #include "../utils/system.h"
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 namespace graph_only_search {
 
 class GraphOnlySearch : public SearchAlgorithm {
+    fs::path output_path;
     std::shared_ptr<Evaluator> evaluator;
     EvaluationContext current_eval_context;
 
@@ -18,7 +23,7 @@ protected:
 
 public:
     GraphOnlySearch(
-        const std::shared_ptr<Evaluator> &h,
+        const std::string &output_filepath,
         OperatorCost cost_type,
         int bound,
         double max_time,
