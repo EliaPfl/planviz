@@ -11,7 +11,7 @@ RUN apt-get install cmake -y
 RUN apt-get install -y python3-full python3-pip python3-venv
 
 # Copying the files from repo
-COPY requirements.txt .
+# COPY requirements.txt .
 COPY . .
 
 # Adding new search algorithm to FastDownward
@@ -26,11 +26,13 @@ RUN python3 -m venv .venv
 RUN .venv/bin/pip install -r requirements.txt
 RUN .venv/bin/python fast-downward/build.py VERBOSE=true
 
+# Modifying privileges of run.sh
+RUN chmod +x run.sh
+
 # == SECOND STEP ===================
 FROM fd_base
 
 # directory to store the problem and domain file to 
 # (to later use it in fastdownward command)
-RUN mkdir temp_pddl_files
 
-CMD ["backend/run.sh"]
+CMD ["run.sh"]
