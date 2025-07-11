@@ -8,6 +8,7 @@
 
 #include "../utils/json.hpp"
 #include <fstream>
+#include "../algorithms/sccs.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -307,13 +308,28 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const std::
     json jnodes = json::array();
     json jedges = json::array();
 
+    // scc
+    std::vector<std::vector<int>> successors(nodes.size());
+    for(const ValueNode &node : this->nodes) {
+        for(const ValueTransition &vT : node.transitions) {
+            successors[node.value].push_back(vT.target->value);
+        }
+    }
+    auto sccs = sccs::compute_maximal_sccs(successors);
+    std::vector<int> scc_ids(successors.size(), -1); //maps Node ID to SCC ID
+    for(unsigned long i = 0; i < sccs.size(); ++i) {
+        for (int node : sccs[i]) {
+            scc_ids[node] = i;
+        }
+    }
     
     for(const ValueNode &node : this->nodes) {
         // Nodes
         json jnode;
         jnode["data"] = {
                 {"id", std::to_string(node.value)},
-                {"name", vars[var].get_fact(node.value).get_name()}
+                {"name", vars[var].get_fact(node.value).get_name()},
+                {"scc_id", scc_ids[node.value]}
             };
         if(node.value == initial_state[var].get_value()) {
             jnode["classes"] += "init";
@@ -346,6 +362,10 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const std::
     graph_json["elements"] = {
         {"nodes", jnodes},
         {"edges", jedges}
+    };
+    graph_json["metadata"] = {
+        {"num_variables", nodes.size()},
+        {"num_sccs", sccs.size()}
     };
 
     std::ofstream out(output_path / ("dtg_" + std::to_string(var) + ".json"));
