@@ -350,7 +350,13 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const std::
                     {"target", std::to_string(vT.target->value)}
                 };
             for(const ValueTransitionLabel &label : vT.labels) {
-                jedge["data"]["label"] += ops[label.op_id].get_name();
+                std::string operation_name = ops[label.op_id].get_name();
+                size_t pos = operation_name.find(" ");
+                if (pos != std::string::npos) {
+                    jedge["data"]["label"][operation_name.substr(0, pos)] += operation_name.substr(pos + 1);
+                } else {
+                    jedge["data"]["label"] += operation_name;
+                }
             }
             jedges.push_back(jedge);
         }
