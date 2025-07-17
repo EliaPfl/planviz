@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import CausalGraphView from "@/views/CausalGraphView.vue";
+import DomainTransitionGraphView from "@/views/DomainTransitionGraphView.vue";
 import UploadFilesView from "@/views/UploadFilesView.vue";
 
 const router = createRouter({
@@ -19,7 +20,7 @@ const router = createRouter({
     {
       path: "/transition",
       name: "DomainTransitionGraph",
-      component: CausalGraphView,
+      component: DomainTransitionGraphView,
     },
     {
       path: "/upload",
