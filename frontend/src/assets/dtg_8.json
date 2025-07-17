@@ -1,0 +1,98 @@
+{
+  "elements": {
+    "edges": [
+      {
+        "data": {
+          "id": "0_1",
+          "label": [
+            "drop ball6 roomb right",
+            "drop ball6 roomb left"
+          ],
+          "source": "0",
+          "target": "1"
+        }
+      },
+      {
+        "data": {
+          "id": "0_2",
+          "label": [
+            "pick ball6 rooma right",
+            "pick ball6 rooma left"
+          ],
+          "source": "0",
+          "target": "2"
+        }
+      },
+      {
+        "data": {
+          "id": "1_0",
+          "label": [
+            "drop ball6 rooma right",
+            "drop ball6 rooma left"
+          ],
+          "source": "1",
+          "target": "0"
+        }
+      },
+      {
+        "data": {
+          "id": "1_2",
+          "label": [
+            "pick ball6 roomb right",
+            "pick ball6 roomb left"
+          ],
+          "source": "1",
+          "target": "2"
+        }
+      },
+      {
+        "data": {
+          "id": "2_0",
+          "label": [
+            "drop ball6 rooma right",
+            "drop ball6 rooma left"
+          ],
+          "source": "2",
+          "target": "0"
+        }
+      },
+      {
+        "data": {
+          "id": "2_1",
+          "label": [
+            "drop ball6 roomb right",
+            "drop ball6 roomb left"
+          ],
+          "source": "2",
+          "target": "1"
+        }
+      }
+    ],
+    "nodes": [
+      {
+        "classes": [
+          "init"
+        ],
+        "data": {
+          "id": "0",
+          "name": "Atom at(ball6, rooma)"
+        }
+      },
+      {
+        "classes": [
+          "goal"
+        ],
+        "data": {
+          "id": "1",
+          "name": "Atom at(ball6, roomb)"
+        }
+      },
+      {
+        "data": {
+          "id": "2",
+          "name": "<none of those>"
+        }
+      }
+    ]
+  }
+}
