@@ -4,6 +4,8 @@
 
 #include "../utils/logging.h"
 #include "../utils/timer.h"
+#include "../utils/json.hpp"
+#include "../algorithms/sccs.h"
 
 #include <algorithm>
 #include <cassert>
@@ -11,7 +13,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <fstream>
+#include <filesystem>
+
+
 using namespace std;
+using json = nlohmann::json;
 
 /*
   We only want to create one causal graph per task, so they are cached globally.
@@ -210,4 +217,70 @@ const CausalGraph &get_causal_graph(const AbstractTask *task) {
     }
     return *causal_graph_cache[task];
 }
+
+void CausalGraph::export_successors(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+    const OperatorsProxy &ops, const VariablesProxy &vars, const fs::path &output_path) const
+    {   
+        json nodes = json::array();
+        json edges = json::array();
+
+        // scc
+        auto sccs = sccs::compute_maximal_sccs(successors);
+        std::vector<int> scc_ids(successors.size(), -1); //maps Node ID to SCC ID
+        for(unsigned long i = 0; i < sccs.size(); ++i) {
+            for (int node : sccs[i]) {
+                scc_ids[node] = i;
+            }
+        }
+
+
+        // Nodes
+        for (unsigned long i = 0; i < successors.size(); ++i) {
+            json node;
+            node["data"] = {
+                {"id", std::to_string(i)},
+                {"name", vars[i].get_fact(0).get_name()},
+                {"scc_id", scc_ids[i]}
+            };
+            // Domain data
+            for (int j = 0; j < vars[i].get_domain_size(); ++j) {
+                node["data"]["domain"][j] = vars[i].get_fact(j).get_name();
+            }
+            // Start and goal values
+            node["data"]["start"] = initial_state[i].get_value();
+            if(goal_map.count(i)) {
+                node["data"]["goal"] = goal_map.at(i);
+            }
+
+            nodes.push_back(node);
+        }
+
+        // Edges
+        for (unsigned long i = 0; i < successors.size(); ++i) {
+            for (int j : successors[i]) {
+                json edge;
+                edge["data"] = {
+                    {"id", std::to_string(i) + "_" + std::to_string(j)},
+                    {"source", std::to_string(i)},
+                    {"target", std::to_string(j)}
+                };
+                edges.push_back(edge);
+            }
+        }
+
+        // full JSON
+        json graph_json;
+        graph_json["elements"] = {
+            {"nodes", nodes},
+            {"edges", edges}
+        };
+        graph_json["metadata"] = {
+            {"num_variables", successors.size()},
+            {"num_sccs", sccs.size()}
+        };
+
+        std::ofstream out(output_path / "causal_graph.json");
+        out << graph_json.dump(2);
+        out.close();
+    }
 }

@@ -7,6 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace cea_heuristic {
 class ContextEnhancedAdditiveHeuristic;
@@ -132,6 +135,8 @@ class DomainTransitionGraph {
     DomainTransitionGraph(const DomainTransitionGraph &other); // copying forbidden
 public:
     DomainTransitionGraph(int var_index, int node_count);
+    void export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+        const OperatorsProxy &ops, const VariablesProxy &vars, const fs::path &output_path) const;
 };
 }
 
