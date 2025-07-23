@@ -18,7 +18,7 @@ const router = createRouter({
       component: CausalGraphView,
     },
     {
-      path: "/transition",
+      path: "/transition/:ID",
       name: "DomainTransitionGraph",
       component: DomainTransitionGraphView,
     },
