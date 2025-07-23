@@ -2,18 +2,42 @@
 import { ref, onMounted } from 'vue';
 import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
-import {elements} from "@/assets/dtg_8.json"
+import axios from 'axios';
 
 const router = useRouter();
 const nodes = ref([]);
 const edges = ref([]);
+const elements = ref([]);
+const props = defineProps({
+    ID: {
+        type: String,
+        required: true
+    }
+});
 
 onMounted(() => {
+    axios.get(`/api/dtg/${props.ID}`)
+        .then(response => {
+                  let colors = generateColors(response.data["metadata"]["num_sccs"]);
 
-    const cy = cytoscape({
+        Object.values(response.data["elements"]["nodes"]).forEach(el => {
+          if (el.data && el.data.scc_id !== undefined) {
+            el.data.color = colors[el.data.scc_id];
+            el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
+          }
+        });
+
+        Object.values(response.data["elements"]["edges"]).forEach(el => {
+          if (el.data && el.data.label) {
+            const labelKeys = Object.keys(el.data.label);
+            el.data.label_text = labelKeys.join(', ');
+          }
+        });
+            elements.value = response.data.elements;
+            const cy = cytoscape({
         container: document.getElementById('cy'),
 
-        elements: elements,
+        elements: elements.value,
 
         style: [
             {
@@ -76,7 +100,7 @@ onMounted(() => {
           ],
 
           layout: {
-            name: 'cose',
+            name: 'grid',
             fit: true,
             padding: 50,
             nodeRepulsion: 100000,
@@ -85,11 +109,18 @@ onMounted(() => {
             randomize: false,
           }
         });
+        nodes.value = cy.nodes().map(node => node.data());
+        cy.on('tap', 'node', handleNodeClick);
+        })
+        .catch(error => {
+            console.error('Error fetching elements:', error);
+        });
+      });
 
     
-    nodes.value = cy.nodes().map(node => node.data());
-    cy.on('tap', 'node', handleNodeClick);
-});
+
+    
+
 
 function handleNodeClick(event) {
     const node = event.target;
@@ -107,6 +138,21 @@ function handleNodeClick(event) {
 
 function handleListClick(node) {
     alert("Node clicked: " + node.name);
+}
+
+function generateColors(count) {
+  const colors = [];
+  for (let i = 0; i < count; i++) {
+    const hue = 180 - ((i * 360 / count) % 360);    // Gleichmäßig verteilte Farbtöne
+    const saturation = 70 + (i % 3) * 10;   // Variiert zwischen 70-90%
+    const lightness = 50 + (i % 2) * 10;    // Variiert zwischen 50-60%
+    colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+  }
+  return colors;
+}
+
+function getContrastColor(hslColor) {
+  return `rgb(#000)`;
 }
 </script>
 

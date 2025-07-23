@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 
@@ -22,30 +23,47 @@ function handleFileInput(event) {
     }
 }
 
+function message(message, icon){
+        const Toast = Swal.mixin({
+        toast: true,
+        position: "bottom-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+        });
+        Toast.fire({
+        icon: icon,
+        title: message
+        });
+}
+
 function handleSubmit() {
     if (!fileInput.value || fileInput.value.length === 0) {
-        alert('Please select at least one file to upload');
+        message('Please select at least one file to upload', 'error');
         return;
-    } else if (fileInput.value.length > 2) {
-        alert('You can only upload a maximum of 2 files');
+    } else if (fileInput.value.length != 2) {
+        message('You can only upload 2 files', 'error');
         return;
     }
 
     const formData = new FormData();
-    fileInput.value.forEach(file => {
-        formData.append('files', file);
+    formData.append('file1', fileInput.value[0]);
+    formData.append('file2', fileInput.value[1]);
+
+    axios.post('/api/upload', formData)
+    .then(response => {
+        console.log('Upload successful:', response.data);
+        message('Files uploaded successfully!', 'success');
+        router.push('/causal');
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        message('Error uploading files: ' + (error.response?.data?.detail || error.message), 'error');
     });
-
-    // axios.post('/api/upload', formData, {
-    //     headers: {
-    //         'Content-Type': 'multipart/form-data'
-    //     }
-    // })
-
-    console.log('Form sent:', formData);
-    alert('Files submitted successfully!');
-
-    router.push('/causal');
 }
 
 function removeFile(index) {
@@ -74,7 +92,7 @@ function removeFile(index) {
                hover:border-blue-400 transition-colors">
                 <i class="pi pi-upload text-5xl text-gray-400 mb-4"></i>
                 <input id="domainInput" name="domain" type="file" accept=".pddl" multiple class="sr-only"
-                    @change="handleFileInput($event, 'domain')" />
+                    @change="handleFileInput($event)" />
             </label>
 
             <button type="submit"
