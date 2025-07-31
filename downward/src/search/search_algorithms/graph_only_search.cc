@@ -8,9 +8,13 @@
 
 #include "../heuristics/domain_transition_graph.h"
 
+#include "../landmarks/landmark_factory_reasonable_orders_hps.h"
+#include "../landmarks/landmark_factory_rpg_sasp.h"
+
 
 using namespace std;
 using namespace domain_transition_graph;
+using namespace landmarks;
 
 namespace graph_only_search {
 
@@ -28,7 +32,7 @@ GraphOnlySearch::GraphOnlySearch(
 void GraphOnlySearch::initialize() {
     using DTGs = std::vector<std::unique_ptr<DomainTransitionGraph>>;
 
-    log << "Starting GraphOnlySearch for structure analysis." << endl;
+    log << "Starting GraphOnlySearch for structure analysis. Export path: " << output_path << endl;
 
     State initial_state = state_registry.get_initial_state();
     GoalsProxy goals = task_proxy.get_goals();
@@ -51,11 +55,33 @@ void GraphOnlySearch::initialize() {
         [](int, int) {return false;};
     DTGFactory factory(task_proxy, false, pruning_condition);
     DTGs transition_graphs = factory.build_dtgs();
+
+    log << "Domain transition graphs computed with " << transition_graphs.size() << " graphs." << endl;
+    
     for(const auto &dtg : transition_graphs) {
         dtg->export_graph(initial_state, goal_map, ops, vars, output_path);
     }
     const State &init_state = task_proxy.get_initial_state();
-    log << "Domain transition graphs exported to " << output_path << endl;
+    log << "Domain transition graphs exported." << endl;
+
+    // Landmarks
+    auto base_lm_factory = std::make_shared<LandmarkFactoryRpgSasp>(
+        true,
+        true,
+        utils::Verbosity::NORMAL
+    );
+    
+    LandmarkFactoryReasonableOrdersHPS lm_factory(
+        base_lm_factory,
+        utils::Verbosity::NORMAL
+    );
+    
+    auto landmark_graph = lm_factory.compute_lm_graph(task);
+    log << "Landmark graph computed with " << landmark_graph->get_num_landmarks() << " landmarks." << endl;
+
+    // Export the landmark graph
+    landmark_graph->export_graph(output_path, vars);
+    log << "Landmark graph exported." << endl;
 }
 
 
