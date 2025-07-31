@@ -10,21 +10,20 @@ const fileInput = ref([]);
 
 function handleFileInput(event) {
     if (!event.target.files || event.target.files.length === 0) {
-        alert('No file selected');
         return;
     }
     for (let i = 0; i < event.target.files.length; i++) {
         const file = event.target.files[i];
         if (!file.name.endsWith('.pddl')) {
-            alert('Please select a valid PDDL file');
+            message('Please select a valid PDDL file', 'error');
             return;
         }
         fileInput.value.push(file);
     }
 }
 
-function message(message, icon){
-        const Toast = Swal.mixin({
+function message(message, icon) {
+    const Toast = Swal.mixin({
         toast: true,
         position: "bottom-end",
         showConfirmButton: false,
@@ -34,36 +33,72 @@ function message(message, icon){
             toast.onmouseenter = Swal.stopTimer;
             toast.onmouseleave = Swal.resumeTimer;
         }
-        });
-        Toast.fire({
+    });
+    Toast.fire({
         icon: icon,
         title: message
-        });
+    });
 }
 
 function handleSubmit() {
     if (!fileInput.value || fileInput.value.length === 0) {
         message('Please select at least one file to upload', 'error');
         return;
-    } else if (fileInput.value.length != 2) {
-        message('You can only upload 2 files', 'error');
+    } else if (fileInput.value.length > 2) {
+        message('You can only upload up to 2 files', 'error');
         return;
     }
+    let startTime;
+    let timerInterval;
+
+    Swal.fire({
+        title: 'Uploading Files...',
+        html: `
+        <div class="flex flex-col items-center">
+            <p>Processing PDDL files and running Fast Downward</p>
+            <p class="text-sm text-gray-500 mt-2">This may take a few moments</p>
+            <p id="swal-timer" class="text-xs text-blue-600 mt-2">Elapsed time: 0.000s</p>
+        </div>
+    `,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => {
+            Swal.showLoading();
+            const timerEl = Swal.getHtmlContainer().querySelector('#swal-timer');
+            startTime = performance.now();
+
+            timerInterval = setInterval(() => {
+                const elapsed = performance.now() - startTime;
+                if (timerEl) {
+                    timerEl.textContent = `Elapsed time: ${(elapsed / 1000).toFixed(2)}s`;
+                }
+            }, 50);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+    });
+
+
 
     const formData = new FormData();
-    formData.append('file1', fileInput.value[0]);
-    formData.append('file2', fileInput.value[1]);
+    fileInput.value.forEach(file => {
+        formData.append('files', file);
+    });
 
     axios.post('/api/upload', formData)
-    .then(response => {
-        console.log('Upload successful:', response.data);
-        message('Files uploaded successfully!', 'success');
-        router.push('/causal');
-    })
-    .catch(error => {
-        console.error('Upload error:', error);
-        message('Error uploading files: ' + (error.response?.data?.detail || error.message), 'error');
-    });
+        .then(response => {
+            console.log('Upload successful:', response.data);
+            const endTime = performance.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            message('Files processed successfully! (' + duration + 's)', 'success');
+            router.push('/causal');
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            message('Error uploading files: ' + (error.response?.data?.detail || error.message), 'error');
+        });
 }
 
 function removeFile(index) {
