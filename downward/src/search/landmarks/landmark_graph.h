@@ -14,6 +14,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace landmarks {
 enum class EdgeType {
@@ -146,6 +149,8 @@ public:
     /* This is needed only by landmark graph factories and will disappear
        when moving landmark graph creation there. */
     void set_landmark_ids();
+
+    void export_graph(const fs::path &output_path, const VariablesProxy &vars);
 };
 }
 
