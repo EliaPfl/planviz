@@ -46,7 +46,6 @@ app = FastAPI()
 
 async def run_downward() -> bool:
     cmd = f"./downward/fast-downward.py {FPATH1} {FPATH2} --search \"{ALGNAME}(\\\"{OUT_DIR}\\\")\""
-
     proc = await asyncio.create_subprocess_shell(
         cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -86,18 +85,21 @@ async def identify_pddl_files(file1: UploadFile, file2: UploadFile):
             detail="Could not identify domain and problem files"
         )
 
-# EXAMPLE:
-# curl 127.0.0.1:8000/upload -F "file1=@rover/numeric/domain.pddl" -F "file2=@rover/numeric/problem.pddl"
-
-
 @app.post("/upload")
-async def upload_and_execute(file1: UploadFile, file2: UploadFile):
-    domain, problem = await identify_pddl_files(file1, file2)
+async def upload_and_execute(files: list[UploadFile]):
+    if len(files) != 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please upload two PDDL files."
+        )
+    
     modifies = has_pddl_files()
+    domain, problem = await identify_pddl_files(files[0], files[1])
     with open(FPATH1, "wb") as doc:
         doc.write(await domain.read())
     with open(FPATH2, "wb") as doc:
         doc.write(await problem.read())
+  
 
     action = "Modified" if modifies else "Uploaded"
 

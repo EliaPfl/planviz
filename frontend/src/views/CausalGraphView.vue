@@ -1,9 +1,9 @@
 <script setup>
-import Graph from "@/components/Graph.vue"
+import CausalGraph from "@/components/CausalGraph.vue"
 </script>
 
 <template>
-    <Graph />
+    <CausalGraph />
 </template>
 
 

@@ -1,5 +1,5 @@
 <script setup>
-import Graph2 from '@/components/Graph2.vue';
+import DTG from '@/components/DTG.vue';
 import { useRoute } from 'vue-router';
 
 
@@ -12,4 +12,6 @@ const id = route.params.ID;
 
 
 
-<template><Graph2 :ID="id"/></template>
+<template>
+    <DTG :ID="id" />
+</template>

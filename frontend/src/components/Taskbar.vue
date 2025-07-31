@@ -8,7 +8,7 @@ const items = [
 </script>
 
 <template>
-  <div class="fixed top-0 left-0 right-0 bg-gray-800 text-white shadow-lg">
+  <div class="fixed top-0 left-0 right-0 bg-gray-800 text-white shadow-lg z-9999">
     <div class="flex justify-between items-center h-16 px-4">
       <RouterLink to="/" class="text-lg font-bold hover:text-blue-400">
         PlanViz
