@@ -157,7 +157,7 @@ function generateColors(count) {
 }
 
 function getContrastColor(hslColor) {
-  return `rgb(#000)`;
+  return `rgb(0, 0, 0)`;
 }
 </script>
 

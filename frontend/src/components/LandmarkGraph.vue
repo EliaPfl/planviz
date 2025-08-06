@@ -12,7 +12,7 @@ const error = ref(null);
 
 onMounted(() => {
     isLoading.value = true;
-    axios.get('/api/cg')
+    axios.get('/api/landmark')
         .then(response => {
             let colors = generateColors(response.data["metadata"]["num_sccs"]);
 

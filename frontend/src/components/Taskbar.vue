@@ -3,6 +3,7 @@ import { RouterLink } from 'vue-router'
 
 const items = [
   { label: 'Causal Graph', iconClass: 'pi pi-chart-bar', to: '/causal' },
+  { label: 'Landmark Graph', iconClass: 'pi pi-chart-line', to: '/landmark' },
   { label: 'Upload PDDL', iconClass: 'pi pi-upload', to: '/upload' }
 ]
 </script>

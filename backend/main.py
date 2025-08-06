@@ -1,4 +1,3 @@
-
 import asyncio
 import os
 from datetime import datetime
@@ -34,6 +33,9 @@ def has_pddl_files() -> bool:
 
 def cg_path() -> str:
     return os.path.join(OUT_DIR, "causal_graph.json")
+
+def landmark_path() -> str:
+    return os.path.join(OUT_DIR, "landmark_graph.json")
 
 
 def dtg_path(ind: int) -> str:
@@ -136,6 +138,19 @@ def domain_t_graph(id: int):
         raise HTTPException(
             status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
             detail=f'No Domain Transition Graph with ID {id} created yet!',
+        )
+
+    with open(path, "r", encoding="utf-8") as file:
+        return file.read()
+
+@app.get("/landmark", response_class=PlainTextResponse)
+def landmark_graph():
+    path = landmark_path()
+
+    if not os.path.exists(path):
+        raise HTTPException(
+            status_code=status.HTTP_405_METHOD_NOT_ALLOWED,
+            detail='No Landmark Graph created yet!',
         )
 
     with open(path, "r", encoding="utf-8") as file:
