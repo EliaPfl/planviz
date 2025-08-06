@@ -2,6 +2,6 @@
 .vscode/
 frontend/node_modules/
 backend/__pycache__/
-out_graphs/
-temp_files/
-.venv/
+backend/out_graphs/
+backend/temp_files/
+backend/.venv/
