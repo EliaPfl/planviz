@@ -45,7 +45,7 @@ function handleSubmit() {
         message('Please select at least one file to upload', 'error');
         return;
     } else if (fileInput.value.length > 2) {
-        message('You can only upload up to 2 files', 'error');
+        message('You can only upload 2 files', 'error');
         return;
     }
     let startTime;
