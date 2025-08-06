@@ -24,7 +24,7 @@ RUN python3 -m venv .venv
 
 # Running python commands to install necessary dependencies & build Fastdownward 
 RUN .venv/bin/pip install -r requirements.txt
-RUN .venv/bin/python downward/build.py VERBOSE=true
+RUN .venv/bin/python ../downward/build.py VERBOSE=true
 
 # Modifying privileges of run.sh
 RUN chmod +x run.sh

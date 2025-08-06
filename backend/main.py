@@ -47,7 +47,7 @@ app = FastAPI()
 
 
 async def run_downward() -> bool:
-    cmd = f"./downward/fast-downward.py {FPATH1} {FPATH2} --search \"{ALGNAME}(\\\"{OUT_DIR}\\\")\""
+    cmd = f"../downward/fast-downward.py {FPATH1} {FPATH2} --search \"{ALGNAME}(\\\"{OUT_DIR}\\\")\""
     proc = await asyncio.create_subprocess_shell(
         cmd,
         stdout=asyncio.subprocess.PIPE,
