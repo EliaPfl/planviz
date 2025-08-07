@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue';
 import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 const nodes = ref([]);
@@ -17,81 +18,101 @@ onMounted(() => {
             let data = response.data;
             let colors = generateColors(data["metadata"]["num_sccs"]);
 
-                Object.values(data["elements"]["nodes"]).forEach(el => {
-                    console.log(el);
-                    if (el.data && el.data.scc_id !== undefined) {
-                        el.data.color = colors[el.data.scc_id];
-                        el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
-                    }
-                });
+            Object.values(data["elements"]["nodes"]).forEach(el => {
+                console.log(el);
+                if (el.data && el.data.scc_id !== undefined) {
+                    el.data.color = colors[el.data.scc_id];
+                    el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
+                }
+            });
 
-                Object.values(data["elements"]["edges"]).forEach(el => {
-                    switch (el.data.type) {
-                        case 0:
-                            el.data.line_style = 'dotted';
-                            break;
-                        case 1:
-                            el.data.line_style = 'dashed';
-                            break;
-                        case 2:
-                            el.data.line_style = 'solid';
-                            break;
-                        case 3:
-                            el.data.line_style = 'solid';
-                            break;
-                    }
-                });
+            Object.values(data["elements"]["edges"]).forEach(el => {
+                switch (el.data.type) {
+                    case 0:
+                        el.data.line_style = 'dotted';
+                        break;
+                    case 1:
+                        el.data.line_style = 'dashed';
+                        break;
+                    case 2:
+                        el.data.line_style = 'solid';
+                        break;
+                    case 3:
+                        el.data.line_style = 'solid';
+                        break;
+                }
+            });
 
-                const cy = cytoscape({
-                    container: document.getElementById('cy'),
+            const cy = cytoscape({
+                container: document.getElementById('cy'),
 
-                    elements: data["elements"],
+                elements: data["elements"],
 
-                    style: [
-                        {
-                            selector: 'node',
-                            style: {
-                                'shape': 'ellipse',
-                                'label': 'data(name)',
-                                'text-wrap': 'wrap',
-                                'text-max-width': 80,
-                                'text-valign': 'center',
-                                'text-halign': 'center',
-                                'padding': '10px',
-                                'background-color': 'data(color)',
-                                'color': 'data(fontColor)',
-                                'font-size': 12,
-                                'width': 'label',
-                                'height': 'label',
-                            }
-                        },
-                        {
-                            selector: 'edge',
-                            style: {
-                                'width': 2,
-                                'line-color': '#ccc',
-                                'target-arrow-color': '#ccc',
-                                'target-arrow-shape': 'triangle',
-                                'curve-style': 'bezier',
-                                'line-style' : 'data(line_style)',
-                            }
+                style: [
+                    {
+                        selector: 'node',
+                        style: {
+                            'shape': 'ellipse',
+                            'label': 'data(name)',
+                            'text-wrap': 'wrap',
+                            'text-max-width': 80,
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'padding': '10px',
+                            'background-color': 'data(color)',
+                            'color': 'data(fontColor)',
+                            'font-size': 12,
+                            'width': 'label',
+                            'height': 'label',
                         }
-                    ],
-
-                    layout: {
-                        name: 'breadthfirst',
-                        fit: true,
-                        padding: 50,
+                    },
+                    {
+                        selector: 'edge',
+                        style: {
+                            'width': 2,
+                            'line-color': '#ccc',
+                            'target-arrow-color': '#ccc',
+                            'target-arrow-shape': 'triangle',
+                            'curve-style': 'bezier',
+                            'line-style': 'data(line_style)',
+                        }
                     }
-                });
+                ],
+
+                layout: {
+                    name: 'breadthfirst',
+                    fit: true,
+                    padding: 50,
+                }
+            });
 
             nodes.value = cy.nodes().map(node => node.data());
             cy.on('tap', 'node', handleNodeClick);
-            
+
             isLoading.value = false;
             console.log(isLoading.value);
         })
         .catch(error => {
+            if (error instanceof AxiosError) {
+                if (error.response && error.response.status === 405) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No Landmark Graph Available',
+                        text: 'Please upload PDDL files first to generate a Landmark Graph.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Upload Files',
+                        confirmButtonColor: '#3B82F6',
+                        cancelButtonText: 'Stay Here',
+                        cancelButtonColor: '#6B7280',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            router.push('/upload');
+                        }
+                    });
+                    isLoading.value = false;
+                    return;
+                }
+            }
             console.error('Error fetching elements:', error);
             error.value = 'Failed to load Causal Graph. Please try again later.';
             isLoading.value = false;
@@ -111,10 +132,6 @@ function handleNodeClick(event) {
             nodeElement.classList.remove('node-highlight');
         }, { once: true });
     }
-}
-
-function handleListClick(node) {
-    router.push({ name: 'DomainTransitionGraph', params: { ID: node.id } });
 }
 
 function generateColors(count) {
@@ -138,7 +155,7 @@ function getContrastColor(hslColor) {
         <div v-if="isLoading" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-0">
             <div class="text-center">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p class="text-gray-600 text-lg">Loading Causal Graph...</p>
+                <p class="text-gray-600 text-lg">Loading Landmark Graph...</p>
             </div>
         </div>
 
@@ -162,7 +179,7 @@ function getContrastColor(hslColor) {
             <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
                 <h2 class="text-lg font-semibold mb-4">Node Details</h2>
                 <ul class="space-y-2">
-                    <li @click="handleListClick(node)" v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
+                    <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
                         class="p-2 rounded hover:bg-blue-50 cursor-pointer">
                         <strong>{{ node.name }}</strong>
                         <p v-if="node.beschreibung" class="text-sm text-gray-600">

@@ -2,7 +2,8 @@
 import { ref, onMounted } from 'vue';
 import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import Swal from 'sweetalert2';
 
 const router = useRouter();
 const nodes = ref([]);
@@ -115,6 +116,26 @@ onMounted(() => {
       cy.on('tap', 'node', handleNodeClick);
     })
     .catch(error => {
+      if (error instanceof AxiosError) {
+        if (error.response && error.response.status === 405) {
+          Swal.fire({
+            icon: 'error',
+            title: 'No Domain Transition Graph Available',
+            text: 'Please upload PDDL files first to generate a Domain Transition Graph.',
+            showCancelButton: true,
+            confirmButtonText: 'Upload Files',
+            confirmButtonColor: '#3B82F6',
+            cancelButtonText: 'Stay Here',
+            cancelButtonColor: '#6B7280',
+          }).then((result) => {
+            if (result.isConfirmed) {
+              router.push('/upload');
+            }
+          });
+          isLoading.value = false;
+          return;
+        }
+      }
       console.error('Error fetching elements:', error);
     });
 });
@@ -136,10 +157,6 @@ function handleNodeClick(event) {
       nodeElement.classList.remove('node-highlight');
     }, { once: true });
   }
-}
-
-function handleListClick(node) {
-  alert("Node clicked: " + node.name);
 }
 
 function generateColors(count) {
@@ -168,7 +185,7 @@ function getContrastColor(hslColor) {
       <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
         <h2 class="text-lg font-semibold mb-4">Node Details</h2>
         <ul class="space-y-2">
-          <li @click="handleListClick(node)" v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
+          <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
             class="p-2 rounded hover:bg-blue-50 cursor-pointer">
             <strong>{{ node.name }}</strong>
             <p v-if="node.beschreibung" class="text-sm text-gray-600">
