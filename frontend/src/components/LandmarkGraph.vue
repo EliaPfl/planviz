@@ -16,15 +16,6 @@ onMounted(() => {
     axios.get('/api/landmark')
         .then(response => {
             let data = response.data;
-            let colors = generateColors(data["metadata"]["num_sccs"]);
-
-            Object.values(data["elements"]["nodes"]).forEach(el => {
-                console.log(el);
-                if (el.data && el.data.scc_id !== undefined) {
-                    el.data.color = colors[el.data.scc_id];
-                    el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
-                }
-            });
 
             Object.values(data["elements"]["edges"]).forEach(el => {
                 switch (el.data.type) {
@@ -58,9 +49,9 @@ onMounted(() => {
                             'text-max-width': 80,
                             'text-valign': 'center',
                             'text-halign': 'center',
-                            'padding': '10px',
-                            'background-color': 'data(color)',
-                            'color': 'data(fontColor)',
+                            'padding': '15px',
+                            'background-color': 'green',
+                            'color': '#fff',
                             'font-size': 12,
                             'width': 'label',
                             'height': 'label',
@@ -134,20 +125,6 @@ function handleNodeClick(event) {
     }
 }
 
-function generateColors(count) {
-    const colors = [];
-    for (let i = 0; i < count; i++) {
-        const hue = (i * 360 / count) % 360;    // Gleichmäßig verteilte Farbtöne
-        const saturation = 70 + (i % 3) * 10;   // Variiert zwischen 70-90%
-        const lightness = 50 + (i % 2) * 10;    // Variiert zwischen 50-60%
-        colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
-    }
-    return colors;
-}
-
-function getContrastColor(hslColor) {
-    return `rgb(#000)`;
-}
 </script>
 
 <template>
