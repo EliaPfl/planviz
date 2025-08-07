@@ -2,7 +2,9 @@
 import { ref, onMounted } from 'vue';
 import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import Swal from 'sweetalert2';
+
 
 const router = useRouter();
 const nodes = ref([]);
@@ -107,6 +109,26 @@ onMounted(() => {
             console.log(isLoading.value);
         })
         .catch(error => {
+            if (error instanceof AxiosError) {
+                if (error.response && error.response.status === 405) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No Causal Graph Available',
+                        text: 'Please upload PDDL files first to generate a Causal Graph.',
+                        showCancelButton: true,
+                        confirmButtonText: 'Upload Files',
+                        confirmButtonColor: '#3B82F6',
+                        cancelButtonText: 'Stay Here',
+                        cancelButtonColor: '#6B7280',
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            router.push('/upload');
+                        }
+                    });
+                    isLoading.value = false;
+                    return;
+                }
+            }
             console.error('Error fetching elements:', error);
             error.value = 'Failed to load Causal Graph. Please try again later.';
             isLoading.value = false;
