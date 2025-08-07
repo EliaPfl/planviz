@@ -9,6 +9,7 @@ const nodes = ref([]);
 const elements = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
+const cy = ref(null);
 
 onMounted(() => {
     isLoading.value = true;
@@ -16,14 +17,15 @@ onMounted(() => {
         .then(response => {
             let colors = generateColors(response.data["metadata"]["num_sccs"]);
 
+            // SCC colors
             Object.values(response.data["elements"]["nodes"]).forEach(el => {
-                console.log(el);
                 if (el.data && el.data.scc_id !== undefined) {
                     el.data.color = colors[el.data.scc_id];
                     el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
                 }
             });
 
+            // shape based on goal
             Object.values(response.data["elements"]["nodes"]).forEach(el => {
                 if (el.data.hasOwnProperty('goal')) {
                     el.data.shape = 'round-octagon';
@@ -31,8 +33,10 @@ onMounted(() => {
                     el.data.shape = 'roundrectangle';
                 }
             });
+
             elements.value = response.data.elements;
-            const cy = cytoscape({
+
+            cy.value = cytoscape({
                 container: document.getElementById('cy'),
                 elements: elements.value,
 
@@ -63,21 +67,37 @@ onMounted(() => {
                             'target-arrow-shape': 'triangle',
                             'curve-style': 'bezier',
                         }
+                    },
+                    {
+                        selector: '.highlighted',
+                        style: {
+                            'line-color': '#e74c3c',
+                            'target-arrow-color': '#e74c3c',
+                            'transition-property': 'background-color, line-color, target-arrow-color',
+                            'transition-duration': '0.1s',
+                            'border-color': '#000',
+                            'border-width': '2px',
+                        }
                     }
                 ],
 
                 layout: {
-                    name: 'grid',
+                    name: 'breadthfirst',
                     fit: true,
                     padding: 50,
-                    nodeRepulsion: 10000,
-                    edgeElasticity: 1000,
+                    animate: false,
                 }
             });
 
-            nodes.value = cy.nodes().map(node => node.data());
-            cy.on('tap', 'node', handleNodeClick);
-            cy.on('dblclick', 'node', function (evt) {
+            nodes.value = cy.value.nodes().map(node => node.data());
+
+            cy.value.on('tap', 'node', handleNodeClick);
+            cy.value.on('tap', function (evt) {
+                if (evt.target === evt.cy) {
+                    cy.value.elements().removeClass('highlighted');
+                }
+            });
+            cy.value.on('dblclick', 'node', function (evt) {
                 const node = evt.target;
                 const nodeId = node.data('id');
 
@@ -98,6 +118,10 @@ function handleNodeClick(event) {
     const node = event.target;
     const nodeData = node.data();
     const nodeElement = document.getElementById(`node-${nodeData.id}`);
+
+    cy.value.elements().removeClass('highlighted');
+    node.addClass('highlighted');
+    node.connectedEdges().addClass('highlighted');
 
     if (nodeElement) {
         nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -124,7 +148,7 @@ function generateColors(count) {
 }
 
 function getContrastColor(hslColor) {
-    return `rgb(#000)`;
+    return `rgb(0, 0, 0)`;
 }
 </script>
 

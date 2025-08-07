@@ -14,75 +14,80 @@ onMounted(() => {
     isLoading.value = true;
     axios.get('/api/landmark')
         .then(response => {
-            let colors = generateColors(response.data["metadata"]["num_sccs"]);
+            let data = response.data;
+            let colors = generateColors(data["metadata"]["num_sccs"]);
 
-            Object.values(response.data["elements"]["nodes"]).forEach(el => {
-                console.log(el);
-                if (el.data && el.data.scc_id !== undefined) {
-                    el.data.color = colors[el.data.scc_id];
-                    el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
-                }
-            });
-
-            Object.values(response.data["elements"]["nodes"]).forEach(el => {
-                if (el.data.hasOwnProperty('goal')) {
-                    el.data.shape = 'round-octagon';
-                } else {
-                    el.data.shape = 'roundrectangle';
-                }
-            });
-            elements.value = response.data.elements;
-            const cy = cytoscape({
-                container: document.getElementById('cy'),
-                elements: elements.value,
-
-                style: [
-                    {
-                        selector: 'node',
-                        style: {
-                            'shape': 'data(shape)',
-                            'label': 'data(name)',
-                            'text-wrap': 'wrap',
-                            'text-max-width': 80,
-                            'text-valign': 'center',
-                            'text-halign': 'center',
-                            'padding': '10px',
-                            'background-color': 'data(color)',
-                            'color': 'data(fontColor)',
-                            'font-size': 12,
-                            'width': 'label',
-                            'height': 'label',
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        style: {
-                            'width': 2,
-                            'line-color': '#ccc',
-                            'target-arrow-color': '#ccc',
-                            'target-arrow-shape': 'triangle',
-                            'curve-style': 'bezier',
-                        }
+                Object.values(data["elements"]["nodes"]).forEach(el => {
+                    console.log(el);
+                    if (el.data && el.data.scc_id !== undefined) {
+                        el.data.color = colors[el.data.scc_id];
+                        el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
                     }
-                ],
+                });
 
-                layout: {
-                    name: 'grid',
-                    fit: true,
-                    padding: 50,
-                    nodeRepulsion: 10000,
-                    edgeElasticity: 1000,
-                }
-            });
+                Object.values(data["elements"]["edges"]).forEach(el => {
+                    switch (el.data.type) {
+                        case 0:
+                            el.data.line_style = 'dotted';
+                            break;
+                        case 1:
+                            el.data.line_style = 'dashed';
+                            break;
+                        case 2:
+                            el.data.line_style = 'solid';
+                            break;
+                        case 3:
+                            el.data.line_style = 'solid';
+                            break;
+                    }
+                });
+
+                const cy = cytoscape({
+                    container: document.getElementById('cy'),
+
+                    elements: data["elements"],
+
+                    style: [
+                        {
+                            selector: 'node',
+                            style: {
+                                'shape': 'ellipse',
+                                'label': 'data(name)',
+                                'text-wrap': 'wrap',
+                                'text-max-width': 80,
+                                'text-valign': 'center',
+                                'text-halign': 'center',
+                                'padding': '10px',
+                                'background-color': 'data(color)',
+                                'color': 'data(fontColor)',
+                                'font-size': 12,
+                                'width': 'label',
+                                'height': 'label',
+                            }
+                        },
+                        {
+                            selector: 'edge',
+                            style: {
+                                'width': 2,
+                                'line-color': '#ccc',
+                                'target-arrow-color': '#ccc',
+                                'target-arrow-shape': 'triangle',
+                                'curve-style': 'bezier',
+                                'line-style' : 'data(line_style)',
+                            }
+                        }
+                    ],
+
+                    layout: {
+                        name: 'breadthfirst',
+                        fit: true,
+                        padding: 50,
+                    }
+                });
 
             nodes.value = cy.nodes().map(node => node.data());
             cy.on('tap', 'node', handleNodeClick);
-            cy.on('dblclick', 'node', function (evt) {
-                const node = evt.target;
-                const nodeId = node.data('id');
-
-                router.push({ name: 'DomainTransitionGraph', params: { ID: nodeId } });
-            });
+            
             isLoading.value = false;
             console.log(isLoading.value);
         })

@@ -105,13 +105,10 @@ onMounted(() => {
         ],
 
         layout: {
-          name: 'grid',
+          name: 'breadthfirst',
           fit: true,
           padding: 50,
-          nodeRepulsion: 100000,
-          edgeElasticity: 100000,
           animate: false,
-          randomize: false,
         }
       });
       nodes.value = cy.nodes().map(node => node.data());
