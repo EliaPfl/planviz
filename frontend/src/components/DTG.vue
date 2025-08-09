@@ -4,6 +4,7 @@ import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
 import axios, { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
+import DTGLegend from './legends/DTGLegend.vue';
 
 const router = useRouter();
 const nodes = ref([]);
@@ -84,21 +85,21 @@ onMounted(() => {
             selector: 'node.init',
             style: {
               'border-color': '#388E3C',
-              'border-width': '5px',
+              'border-width': '4px',
             }
           },
           {
             selector: 'node.goal',
             style: {
               'border-color': '#D32F2F',
-              'border-width': '5px',
+              'border-width': '4px',
             }
           },
           {
             selector: 'node.init.goal',
             style: {
               'border-color': '#FBC02D',
-              'border-width': '5px',
+              'border-width': '4px',
 
             }
           },
@@ -177,8 +178,9 @@ function getContrastColor(hslColor) {
 
 <template>
   <div class="flex h-[calc(100vh-4rem)] mt-16">
-    <div id="left" class="w-2/3 p-4">
+    <div id="left" class="w-2/3 p-4 relative">
       <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
+      <DTGLegend/>
     </div>
 
     <div id="right" class="w-1/3 p-4">
