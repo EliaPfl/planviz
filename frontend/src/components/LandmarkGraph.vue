@@ -4,6 +4,7 @@ import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
 import axios, { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
+import LandmarkLegend from './legends/LandmarkLegend.vue';
 
 const router = useRouter();
 const nodes = ref([]);
@@ -148,8 +149,9 @@ function handleNodeClick(event) {
             </div>
         </div>
 
-        <div id="left" class="w-2/3 p-4">
+        <div id="left" class="w-2/3 p-4 relative">
             <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
+            <LandmarkLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">

@@ -4,6 +4,7 @@ import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
 import axios, { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
+import CausalLegend from './legends/CausalLegend.vue';
 
 
 const router = useRouter();
@@ -195,8 +196,9 @@ function getContrastColor(hslColor) {
             </div>
         </div>
 
-        <div id="left" class="w-2/3 p-4">
+        <div id="left" class="w-2/3 p-4 relative">
             <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
+            <CausalLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
