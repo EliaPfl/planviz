@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - temp_files:/app/temp_files
+      - out_graphs:/app/out_graphs
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://backend:8000
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+volumes:
+  temp_files:
+  out_graphs:
