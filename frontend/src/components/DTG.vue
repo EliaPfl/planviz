@@ -10,6 +10,8 @@ const router = useRouter();
 const nodes = ref([]);
 const edges = ref([]);
 const elements = ref([]);
+const selectedElement = ref(null);
+const selectedType = ref('node'); // 'node' or 'edge'
 const props = defineProps({
   ID: {
     type: String,
@@ -31,6 +33,9 @@ onMounted(() => {
 
       Object.values(response.data["elements"]["edges"]).forEach(el => {
         if (el.data && el.data.label) {
+          // Speichere das ursprüngliche Label für detaillierte Anzeige
+          el.data.originalLabel = el.data.label;
+          
           if (typeof el.data.label === 'object') {
             if (Array.isArray(el.data.label)) {
               el.data.label = el.data.label.join(', ');
@@ -114,7 +119,9 @@ onMounted(() => {
         }
       });
       nodes.value = cy.nodes().map(node => node.data());
+      edges.value = cy.edges().map(edge => edge.data());
       cy.on('tap', 'node', handleNodeClick);
+      cy.on('tap', 'edge', handleEdgeClick);
     })
     .catch(error => {
       if (error instanceof AxiosError) {
@@ -149,15 +156,38 @@ onMounted(() => {
 function handleNodeClick(event) {
   const node = event.target;
   const nodeData = node.data();
-  const nodeElement = document.getElementById(`node-${nodeData.id}`);
-
-  if (nodeElement) {
-    nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    nodeElement.classList.add('node-highlight');
-    nodeElement.addEventListener('animationend', () => {
-      nodeElement.classList.remove('node-highlight');
-    }, { once: true });
+  selectedElement.value = nodeData;
+  selectedType.value = 'node';
+  
+  // Scroll to top of the sidebar to show details
+  const rightSidebar = document.getElementById('right');
+  if (rightSidebar) {
+    const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
+}
+
+function handleEdgeClick(event) {
+  const edge = event.target;
+  const edgeData = edge.data();
+  selectedElement.value = edgeData;
+  selectedType.value = 'edge';
+  
+  // Scroll to top of the sidebar to show details
+  const rightSidebar = document.getElementById('right');
+  if (rightSidebar) {
+    const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
+    if (scrollContainer) {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+}
+
+function getNodeName(nodeId) {
+  const node = nodes.value.find(n => n.id === nodeId);
+  return node ? node.name : `Node ${nodeId}`;
 }
 
 function generateColors(count) {
@@ -179,7 +209,8 @@ function getContrastColor(hslColor) {
 <template>
   <div class="flex h-[calc(100vh-4rem)] mt-16">
     <div id="left" class="w-2/3 p-4 relative">
-      <RouterLink to="/causal" class="absolute top-5 left-5 z-10 text-2xl mb-1"><i class="pi pi-arrow-left"></i>
+      <RouterLink to="/causal" class="absolute top-5 left-5 z-10 text-2xl mb-1 bg-white rounded w-12 h-12 flex items-center justify-center shadow">
+        <i class="pi pi-arrow-left"></i>
       </RouterLink>
       <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
       <DTGLegend />
@@ -187,16 +218,86 @@ function getContrastColor(hslColor) {
 
     <div id="right" class="w-1/3 p-4">
       <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
-        <h2 class="text-lg font-semibold mb-4">Node Details</h2>
-        <ul class="space-y-2">
-          <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
-            class="p-2 rounded hover:bg-blue-50 cursor-pointer">
-            <strong>{{ node.name }}</strong>
-            <p v-if="node.beschreibung" class="text-sm text-gray-600">
-              {{ node.beschreibung }}
-            </p>
-          </li>
-        </ul>
+        <div class="mb-4">
+          <div class="flex space-x-2 mb-4">
+            <button 
+              @click="selectedType = 'node'; selectedElement = null" 
+              :class="['px-3 py-1 rounded text-sm', selectedType === 'node' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
+              Nodes
+            </button>
+            <button 
+              @click="selectedType = 'edge'; selectedElement = null" 
+              :class="['px-3 py-1 rounded text-sm', selectedType === 'edge' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
+              Edges
+            </button>
+          </div>
+        </div>
+
+        <!-- Selected Element Details -->
+        <div v-if="selectedElement && selectedType === 'node'" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+          <h3 class="text-lg font-semibold mb-2 text-blue-800">Selected Node</h3>
+          <div class="space-y-2">
+            <p><strong>ID:</strong> {{ selectedElement.id }}</p>
+            <p><strong>Name:</strong> {{ selectedElement.name }}</p>
+            <p v-if="selectedElement.scc_id !== undefined"><strong>SCC ID:</strong> {{ selectedElement.scc_id }}</p>
+          </div>
+        </div>
+
+        <div v-if="selectedElement && selectedType === 'edge'" class="mb-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+          <h3 class="text-lg font-semibold mb-2 text-green-800">Selected Edge</h3>
+          <div class="space-y-3">
+            <p><strong>ID:</strong> {{ selectedElement.id }}</p>
+            <p><strong>From:</strong> {{ getNodeName(selectedElement.source) }}</p>
+            <p><strong>To:</strong> {{ getNodeName(selectedElement.target) }}</p>
+            <div v-if="selectedElement.originalLabel">
+              <strong>Actions:</strong>
+              <div class="mt-2 space-y-2">
+                <div v-for="(params, action) in selectedElement.originalLabel" :key="action" 
+                     class="bg-white rounded border p-3">
+                  <div class="font-semibold text-green-700 mb-2 capitalize">{{ action }}</div>
+                  <div class="space-y-1">
+                    <div v-for="(param, index) in params" :key="index" 
+                         class="text-sm bg-gray-100 rounded px-2 py-1 font-mono">
+                      ({{ param }})
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Nodes List -->
+        <div v-show="selectedType === 'node'">
+          <h2 class="text-lg font-semibold mb-4">All Nodes</h2>
+          <ul class="space-y-2">
+            <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
+              @click="selectedElement = node; selectedType = 'node'"
+              :class="['p-2 rounded hover:bg-blue-50 cursor-pointer', selectedElement?.id === node.id && selectedType === 'node' ? 'bg-blue-100 border border-blue-300' : '']">
+              <strong>{{ node.name }}</strong>
+              <p v-if="node.beschreibung" class="text-sm text-gray-600">
+                {{ node.beschreibung }}
+              </p>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Edges List -->
+        <div v-show="selectedType === 'edge'">
+          <h2 class="text-lg font-semibold mb-4">All Edges</h2>
+          <ul class="space-y-2">
+            <li v-for="edge in edges" :key="edge.id" :id="`edge-` + edge.id"
+              @click="selectedElement = edge; selectedType = 'edge'"
+              :class="['p-2 rounded hover:bg-green-50 cursor-pointer', selectedElement?.id === edge.id && selectedType === 'edge' ? 'bg-green-100 border border-green-300' : '']">
+              <div class="text-sm">
+                <strong>{{ getNodeName(edge.source) }} → {{ getNodeName(edge.target) }}</strong>
+                <p v-if="edge.label" class="text-gray-600 mt-1">
+                  {{ edge.label }}
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
@@ -204,22 +305,4 @@ function getContrastColor(hslColor) {
 
 
 <style scoped>
-@keyframes pulse {
-
-  0%,
-  100% {
-    background-color: #DBEAFE;
-    border-color: #BFDBFE;
-  }
-
-  50% {
-    background-color: transparent;
-    border-color: transparent;
-  }
-}
-
-.node-highlight {
-  animation: pulse 0.6s ease-in-out 0s 2;
-  border: 2px solid transparent;
-}
 </style>
