@@ -13,6 +13,7 @@ const elements = ref([]);
 const isLoading = ref(true);
 const error = ref(null);
 const cy = ref(null);
+const expandedNodes = ref(new Set());
 
 onMounted(() => {
     isLoading.value = true;
@@ -26,6 +27,7 @@ onMounted(() => {
                     el.data.color = colors[el.data.scc_id];
                     el.data.fontColor = getContrastColor(colors[el.data.scc_id]);
                 }
+                el.data.actions = extractActionsForNode(el.data.id, response.data.elements.edges);
             });
 
             // shape based on goal
@@ -80,6 +82,7 @@ onMounted(() => {
                             'transition-duration': '0.1s',
                             'border-color': '#000',
                             'border-width': '2px',
+                            'z-index': 10,
                         }
                     }
                 ],
@@ -152,11 +155,25 @@ function handleNodeClick(event) {
         nodeElement.addEventListener('animationend', () => {
             nodeElement.classList.remove('node-highlight');
         }, { once: true });
+        expandedNodes.value.clear();
+        expandedNodes.value.add(nodeData.id);
     }
 }
 
 function handleListClick(node) {
-    router.push({ name: 'DomainTransitionGraph', params: { ID: node.id } });
+    expandedNodes.value.clear();
+    if (expandedNodes.value.has(node.id)) {
+        expandedNodes.value.delete(node.id);
+    } else {
+        expandedNodes.value.add(node.id);
+    }
+
+    if (cy.value) {
+        cy.value.elements().removeClass('highlighted');
+        const cyNode = cy.value.getElementById(node.id);
+        cyNode.addClass('highlighted');
+        cyNode.connectedEdges().addClass('highlighted');
+    }
 }
 
 function generateColors(count) {
@@ -173,26 +190,32 @@ function generateColors(count) {
 function getContrastColor(hslColor) {
     return `rgb(0, 0, 0)`;
 }
+
+function extractActionsForNode(nodeId, edges) {
+    const actions = new Set();
+
+    edges.forEach(edge => {
+        // Wenn Node als Source oder Target beteiligt ist
+        if (edge.data.source === nodeId || edge.data.target === nodeId) {
+            if (edge.data.label && typeof edge.data.label === 'object') {
+                // Alle Aktionstypen aus dem Label extrahieren
+                Object.keys(edge.data.label).forEach(actionType => {
+                    actions.add(actionType);
+                });
+            }
+        }
+    });
+
+    return Array.from(actions);
+}
 </script>
 
 <template>
     <div class="flex h-[calc(100vh-4rem)] mt-16">
-        <div v-if="isLoading" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-0">
+        <div v-if="isLoading" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-999">
             <div class="text-center">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                 <p class="text-gray-600 text-lg">Loading Causal Graph...</p>
-            </div>
-        </div>
-
-        <div v-else-if="error" class="flex items-center justify-center w-full">
-            <div class="text-center p-8">
-                <div class="text-red-500 text-6xl mb-4">⚠️</div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-2">Error Loading Graph</h2>
-                <p class="text-gray-600 mb-4">{{ error }}</p>
-                <button @click="window.location.reload()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Retry
-                </button>
             </div>
         </div>
 
@@ -211,6 +234,17 @@ function getContrastColor(hslColor) {
                         <p v-if="node.beschreibung" class="text-sm text-gray-600">
                             {{ node.beschreibung }}
                         </p>
+                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            SCC {{ node.scc_id }}
+                        </span>
+                        <div v-if="expandedNodes.has(node.id)" class="mt-2">
+                            <strong>Actions:</strong>
+                            <ul class="list-disc pl-5">
+                                <li v-for="action in node.actions" :key="action" class="text-sm text-gray-700">
+                                    {{ action }}
+                                </li>
+                            </ul>
+                        </div>
                     </li>
                 </ul>
             </div>
