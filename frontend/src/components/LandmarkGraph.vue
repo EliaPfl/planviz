@@ -8,7 +8,10 @@ import LandmarkLegend from './legends/LandmarkLegend.vue';
 
 const router = useRouter();
 const nodes = ref([]);
+const edges = ref([]);
 const elements = ref([]);
+const selectedElement = ref(null);
+const selectedType = ref('node');
 const isLoading = ref(true);
 const error = ref(null);
 
@@ -79,6 +82,7 @@ onMounted(() => {
             });
 
             nodes.value = cy.nodes().map(node => node.data());
+            edges.value = cy.edges().map(edge => edge.data());
             cy.on('tap', 'node', handleNodeClick);
 
             isLoading.value = false;
@@ -115,14 +119,16 @@ onMounted(() => {
 function handleNodeClick(event) {
     const node = event.target;
     const nodeData = node.data();
-    const nodeElement = document.getElementById(`node-${nodeData.id}`);
-
-    if (nodeElement) {
-        nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        nodeElement.classList.add('node-highlight');
-        nodeElement.addEventListener('animationend', () => {
-            nodeElement.classList.remove('node-highlight');
-        }, { once: true });
+    selectedElement.value = nodeData;
+    selectedType.value = 'node';
+    
+    // Scroll to top of the sidebar to show details
+    const rightSidebar = document.getElementById('right');
+    if (rightSidebar) {
+        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
+        if (scrollContainer) {
+            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 }
 
@@ -156,38 +162,43 @@ function handleNodeClick(event) {
 
         <div id="right" class="w-1/3 p-4">
             <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
-                <h2 class="text-lg font-semibold mb-4">Node Details</h2>
-                <ul class="space-y-2">
-                    <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
-                        class="p-2 rounded hover:bg-blue-50 cursor-pointer">
-                        <strong>{{ node.name }}</strong>
-                        <p v-if="node.beschreibung" class="text-sm text-gray-600">
-                            {{ node.beschreibung }}
-                        </p>
-                    </li>
-                </ul>
+                <div class="mb-4">
+                    <div class="flex space-x-2 mb-4">
+                        <button 
+                            class="px-3 py-1 rounded text-sm bg-blue-500 text-white">
+                            Nodes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Selected Element Details -->
+                <div v-if="selectedElement" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                    <h3 class="text-lg font-semibold mb-2 text-blue-800">Selected Node</h3>
+                    <div class="space-y-2">
+                        <p><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p><strong>Name:</strong> {{ selectedElement.name }}</p>
+                        <p v-if="selectedElement.beschreibung"><strong>Description:</strong> {{ selectedElement.beschreibung }}</p>
+                    </div>
+                </div>
+
+                <!-- Nodes List -->
+                <div>
+                    <h2 class="text-lg font-semibold mb-4">All Nodes</h2>
+                    <ul class="space-y-2">
+                        <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
+                            @click="selectedElement = node"
+                            :class="['p-2 rounded hover:bg-blue-50 cursor-pointer', selectedElement?.id === node.id ? 'bg-blue-100 border border-blue-300' : '']">
+                            <strong>{{ node.name }}</strong>
+                            <p v-if="node.beschreibung" class="text-sm text-gray-600">
+                                {{ node.beschreibung }}
+                            </p>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-@keyframes pulse {
-
-    0%,
-    100% {
-        background-color: #DBEAFE;
-        border-color: #BFDBFE;
-    }
-
-    50% {
-        background-color: transparent;
-        border-color: transparent;
-    }
-}
-
-.node-highlight {
-    animation: pulse 0.6s ease-in-out 0s 2;
-    border: 2px solid transparent;
-}
 </style>

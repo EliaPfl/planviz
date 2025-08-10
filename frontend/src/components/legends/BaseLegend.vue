@@ -1,5 +1,5 @@
 <template>
-  <div class="legend-container absolute top-4 right-4 z-20">
+  <div class="legend-container absolute top-5 right-5 z-20">
     <!-- Toggle Button -->
     <button @click="toggleLegend"
       class="bg-blue-600 text-white p-3 rounded-lg shadow-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 relative"
