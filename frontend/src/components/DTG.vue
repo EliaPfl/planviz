@@ -179,8 +179,10 @@ function getContrastColor(hslColor) {
 <template>
   <div class="flex h-[calc(100vh-4rem)] mt-16">
     <div id="left" class="w-2/3 p-4 relative">
+      <RouterLink to="/causal" class="absolute top-5 left-5 z-10 text-2xl mb-1"><i class="pi pi-arrow-left"></i>
+      </RouterLink>
       <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
-      <DTGLegend/>
+      <DTGLegend />
     </div>
 
     <div id="right" class="w-1/3 p-4">
