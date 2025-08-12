@@ -32,10 +32,9 @@ onMounted(() => {
                 }
             });
 
-            // Edges verarbeiten
+            // Edge labels
             Object.values(response.data["elements"]["edges"]).forEach(el => {
                 if (el.data && el.data.label) {
-                    // Speichere das ursprüngliche Label für detaillierte Anzeige
                     el.data.originalLabel = el.data.label;
                     
                     if (typeof el.data.label === 'object') {
@@ -58,7 +57,8 @@ onMounted(() => {
             });
 
             elements.value = response.data.elements;
-
+            
+            // cytoscape instance
             cy.value = cytoscape({
                 container: document.getElementById('cy'),
                 elements: elements.value,
@@ -235,9 +235,9 @@ function getNodeName(nodeId) {
 function generateColors(count) {
     const colors = [];
     for (let i = 0; i < count; i++) {
-        const hue = (i * 360 / count) % 360;    // Gleichmäßig verteilte Farbtöne
-        const saturation = 70 + (i % 3) * 10;   // Variiert zwischen 70-90%
-        const lightness = 50 + (i % 2) * 10;    // Variiert zwischen 50-60%
+        const hue = (i * 360 / count) % 360;
+        const saturation = 70 + (i % 3) * 10;
+        const lightness = 50 + (i % 2) * 10;
         colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
     }
     return colors;
@@ -249,61 +249,61 @@ function getContrastColor(hslColor) {
 </script>
 
 <template>
-    <div class="flex h-[calc(100vh-4rem)] mt-16">
-        <div v-if="isLoading" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-999">
+    <div class="flex h-[calc(100vh-4rem)] mt-16 dark:bg-gray-700">
+        <div v-if="isLoading" class="fixed inset-0 bg-white dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-999">
             <div class="text-center">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p class="text-gray-600 text-lg">Loading Causal Graph...</p>
+                <p class="text-gray-600 dark:text-gray-300 text-lg">Loading Causal Graph...</p>
             </div>
         </div>
 
         <div id="left" class="w-2/3 p-4 relative">
-            <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
+            <div id="cy" class="w-full h-full bg-gray-100 dark:bg-gray-800 rounded-lg shadow-inner"></div>
             <CausalLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
-            <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
+            <div class="bg-gray-50 dark:bg-gray-800 h-full overflow-y-auto rounded-lg shadow-inner p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
                         <button 
                             @click="selectedType = 'node'; selectedElement = null" 
-                            :class="['px-3 py-1 rounded text-sm', selectedType === 'node' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
+                            :class="['px-3 py-1 rounded text-sm', selectedType === 'node' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300']">
                             Nodes
                         </button>
                         <button 
                             @click="selectedType = 'edge'; selectedElement = null" 
-                            :class="['px-3 py-1 rounded text-sm', selectedType === 'edge' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
+                            :class="['px-3 py-1 rounded text-sm', selectedType === 'edge' ? 'bg-blue-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300']">
                             Edges
                         </button>
                     </div>
                 </div>
 
                 <!-- Selected Element Details -->
-                <div v-if="selectedElement && selectedType === 'node'" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                    <h3 class="text-lg font-semibold mb-2 text-blue-800">Selected Node</h3>
+                <div v-if="selectedElement && selectedType === 'node'" class="mb-6 p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border-l-4 border-blue-500">
+                    <h3 class="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-300">Selected Node</h3>
                     <div class="space-y-2">
-                        <p><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p><strong>Name:</strong> {{ selectedElement.name }}</p>
-                        <p v-if="selectedElement.scc_id !== undefined"><strong>SCC ID:</strong> {{ selectedElement.scc_id }}</p>
+                        <p class="text-gray-900 dark:text-gray-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p class="text-gray-900 dark:text-gray-100"><strong>Name:</strong> {{ selectedElement.name }}</p>
+                        <p v-if="selectedElement.scc_id !== undefined" class="text-gray-900 dark:text-gray-100"><strong>SCC ID:</strong> {{ selectedElement.scc_id }}</p>
                     </div>
                 </div>
 
-                <div v-if="selectedElement && selectedType === 'edge'" class="mb-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                    <h3 class="text-lg font-semibold mb-2 text-green-800">Selected Edge</h3>
+                <div v-if="selectedElement && selectedType === 'edge'" class="mb-6 p-4 bg-green-50 dark:bg-green-900 rounded-lg border-l-4 border-green-500">
+                    <h3 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-300">Selected Edge</h3>
                     <div class="space-y-3">
-                        <p><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p><strong>From:</strong> {{ getNodeName(selectedElement.source) }}</p>
-                        <p><strong>To:</strong> {{ getNodeName(selectedElement.target) }}</p>
+                        <p class="text-gray-900 dark:text-gray-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p class="text-gray-900 dark:text-gray-100"><strong>From:</strong> {{ getNodeName(selectedElement.source) }}</p>
+                        <p class="text-gray-900 dark:text-gray-100"><strong>To:</strong> {{ getNodeName(selectedElement.target) }}</p>
                         <div v-if="selectedElement.originalLabel">
-                            <strong>Actions:</strong>
+                            <strong class="text-gray-900 dark:text-gray-100">Actions:</strong>
                             <div class="mt-2 space-y-2">
                                 <div v-for="(params, action) in selectedElement.originalLabel" :key="action" 
-                                     class="bg-white rounded border p-3">
-                                    <div class="font-semibold text-green-700 mb-2 capitalize">{{ action }}</div>
+                                     class="bg-white dark:bg-gray-700 rounded border dark:border-gray-600 p-3">
+                                    <div class="font-semibold text-green-700 dark:text-green-300 mb-2 capitalize">{{ action }}</div>
                                     <div class="space-y-1">
                                         <div v-for="(param, index) in params" :key="index" 
-                                             class="text-sm bg-gray-100 rounded px-2 py-1 font-mono">
+                                             class="text-sm bg-gray-100 dark:bg-gray-600 rounded px-2 py-1 font-mono text-gray-900 dark:text-gray-100">
                                             ({{ param }})
                                         </div>
                                     </div>
@@ -311,8 +311,8 @@ function getContrastColor(hslColor) {
                             </div>
                         </div>
                         <div v-else-if="selectedElement.label">
-                            <strong>Label:</strong>
-                            <div class="mt-1 p-2 bg-white rounded border text-sm">
+                            <strong class="text-gray-900 dark:text-gray-100">Label:</strong>
+                            <div class="mt-1 p-2 bg-white dark:bg-gray-700 rounded border dark:border-gray-600 text-sm text-gray-900 dark:text-gray-100">
                                 {{ selectedElement.label }}
                             </div>
                         </div>
@@ -321,15 +321,15 @@ function getContrastColor(hslColor) {
 
                 <!-- Nodes List -->
                 <div v-show="selectedType === 'node'">
-                    <h2 class="text-lg font-semibold mb-4">Node Details</h2>
+                    <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Node Details</h2>
                     <ul class="space-y-2">
                         <li @click="handleListClick(node, 'node')" v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
-                            :class="['p-2 rounded hover:bg-blue-50 cursor-pointer', selectedElement?.id === node.id && selectedType === 'node' ? 'bg-blue-100 border border-blue-300' : '']">
-                            <strong>{{ node.name }}</strong>
-                            <p v-if="node.beschreibung" class="text-sm text-gray-600">
+                            :class="['p-2 rounded hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer', selectedElement?.id === node.id && selectedType === 'node' ? 'bg-blue-100 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-600' : '']">
+                            <strong class="text-gray-900 dark:text-gray-100">{{ node.name }}</strong>
+                            <p v-if="node.beschreibung" class="text-sm text-gray-600 dark:text-gray-400">
                                 {{ node.beschreibung }}
                             </p>
-                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                            <span class="text-xs bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded">
                                 SCC {{ node.scc_id }}
                             </span>
                         </li>
@@ -338,14 +338,14 @@ function getContrastColor(hslColor) {
 
                 <!-- Edges List -->
                 <div v-show="selectedType === 'edge'">
-                    <h2 class="text-lg font-semibold mb-4">All Edges</h2>
+                    <h2 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">All Edges</h2>
                     <ul class="space-y-2">
                         <li v-for="edge in edges" :key="edge.id" :id="`edge-` + edge.id"
                             @click="handleListClick(edge, 'edge')"
-                            :class="['p-2 rounded hover:bg-green-50 cursor-pointer', selectedElement?.id === edge.id && selectedType === 'edge' ? 'bg-green-100 border border-green-300' : '']">
+                            :class="['p-2 rounded hover:bg-green-50 dark:hover:bg-green-900 cursor-pointer', selectedElement?.id === edge.id && selectedType === 'edge' ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-600' : '']">
                             <div class="text-sm">
-                                <strong>{{ getNodeName(edge.source) }} → {{ getNodeName(edge.target) }}</strong>
-                                <p v-if="edge.label" class="text-gray-600 mt-1">
+                                <strong class="text-gray-900 dark:text-gray-100">{{ getNodeName(edge.source) }} → {{ getNodeName(edge.target) }}</strong>
+                                <p v-if="edge.label" class="text-gray-600 dark:text-gray-400 mt-1">
                                     {{ edge.label }}
                                 </p>
                             </div>

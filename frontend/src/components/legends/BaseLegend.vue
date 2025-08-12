@@ -21,7 +21,7 @@
       :class="{ 'opacity-100 translate-y-0': isOpen, 'opacity-0 -translate-y-2': !isOpen }">
       <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ subtitle }}</h3>
 
-      <!-- Slot für spezifische Legende-Inhalte -->
+      <!-- Slot for legend content -->
       <slot name="legend-content"></slot>
 
       <div v-if="description" class="mt-4 pt-3 border-t border-gray-200">
@@ -36,7 +36,7 @@
 <script setup>
 import { ref } from 'vue'
 
-// Props für Anpassbarkeit
+// Props for the legend component
 const props = defineProps({
   title: {
     type: String,

@@ -20,7 +20,8 @@ onMounted(() => {
     axios.get('/api/landmark')
         .then(response => {
             let data = response.data;
-
+            
+            // edge styles
             Object.values(data["elements"]["edges"]).forEach(el => {
                 switch (el.data.type) {
                     case 0:
@@ -38,6 +39,7 @@ onMounted(() => {
                 }
             });
 
+            // cytoscape instance
             const cy = cytoscape({
                 container: document.getElementById('cy'),
 
@@ -132,6 +134,20 @@ function handleNodeClick(event) {
     }
 }
 
+function handleNodeListClick(node) {
+    selectedElement.value = node;
+    selectedType.value = 'node';
+    
+    // Scroll to top of the sidebar to show details
+    const rightSidebar = document.getElementById('right');
+    if (rightSidebar) {
+        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
+        if (scrollContainer) {
+            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+}
+
 </script>
 
 <template>
@@ -186,7 +202,7 @@ function handleNodeClick(event) {
                     <h2 class="text-lg font-semibold mb-4">All Nodes</h2>
                     <ul class="space-y-2">
                         <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
-                            @click="selectedElement = node"
+                            @click="handleNodeListClick(node)"
                             :class="['p-2 rounded hover:bg-blue-50 cursor-pointer', selectedElement?.id === node.id ? 'bg-blue-100 border border-blue-300' : '']">
                             <strong>{{ node.name }}</strong>
                             <p v-if="node.beschreibung" class="text-sm text-gray-600">

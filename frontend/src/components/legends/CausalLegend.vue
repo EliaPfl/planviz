@@ -48,14 +48,14 @@
           </div>
         </div>
 
-        <!-- Farben -->
+        <!-- Colors -->
         <div class="mb-4">
           <h4 class="font-medium text-gray-700 mb-2">Farben</h4>
           <p class="text-sm text-gray-600">Jede Farbe markiert eine starke Zusammenhangskomponente im Graphen.
           </p>
         </div>
 
-        <!-- Interaktionen -->
+        <!-- Interactions -->
          <div class="mb-4">
           <h4 class="font-medium text-gray-700 mb-2">Interaktionen</h4>
           <p class="text-sm text-gray-600">

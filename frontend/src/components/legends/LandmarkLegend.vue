@@ -20,6 +20,7 @@
           </div>
         </div>
 
+        <!-- Edge Types -->
         <div>
           <h4 class="font-medium text-gray-700 mb-2">Kanten</h4>
           <div class="flex items-center gap-3">
