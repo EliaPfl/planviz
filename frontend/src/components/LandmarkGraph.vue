@@ -9,7 +9,6 @@ import LandmarkLegend from './legends/LandmarkLegend.vue';
 const router = useRouter();
 const nodes = ref([]);
 const edges = ref([]);
-const elements = ref([]);
 const selectedElement = ref(null);
 const selectedType = ref('node');
 const isLoading = ref(true);
@@ -20,7 +19,7 @@ onMounted(() => {
     axios.get('/api/landmark')
         .then(response => {
             let data = response.data;
-            
+
             // edge styles
             Object.values(data["elements"]["edges"]).forEach(el => {
                 switch (el.data.type) {
@@ -91,25 +90,23 @@ onMounted(() => {
             console.log(isLoading.value);
         })
         .catch(error => {
-            if (error instanceof AxiosError) {
-                if (error.response && error.response.status === 405) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'No Landmark Graph Available',
-                        text: 'Please upload PDDL files first to generate a Landmark Graph.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Upload Files',
-                        confirmButtonColor: '#3B82F6',
-                        cancelButtonText: 'Stay Here',
-                        cancelButtonColor: '#6B7280',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            router.push('/upload');
-                        }
-                    });
-                    isLoading.value = false;
-                    return;
-                }
+            if (error.response && error.response.status === 405) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Landmark Graph Available',
+                    text: 'Please upload PDDL files first to generate a Landmark Graph.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Upload Files',
+                    confirmButtonColor: '#3B82F6',
+                    cancelButtonText: 'Stay Here',
+                    cancelButtonColor: '#6B7280',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        router.push('/upload');
+                    }
+                });
+                isLoading.value = false;
+                return;
             }
             console.error('Error fetching elements:', error);
             error.value = 'Failed to load Causal Graph. Please try again later.';
@@ -123,7 +120,7 @@ function handleNodeClick(event) {
     const nodeData = node.data();
     selectedElement.value = nodeData;
     selectedType.value = 'node';
-    
+
     // Scroll to top of the sidebar to show details
     const rightSidebar = document.getElementById('right');
     if (rightSidebar) {
@@ -137,7 +134,7 @@ function handleNodeClick(event) {
 function handleNodeListClick(node) {
     selectedElement.value = node;
     selectedType.value = 'node';
-    
+
     // Scroll to top of the sidebar to show details
     const rightSidebar = document.getElementById('right');
     if (rightSidebar) {
@@ -180,8 +177,7 @@ function handleNodeListClick(node) {
             <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
-                        <button 
-                            class="px-3 py-1 rounded text-sm bg-blue-500 text-white">
+                        <button class="px-3 py-1 rounded text-sm bg-blue-500 text-white">
                             Nodes
                         </button>
                     </div>
@@ -193,7 +189,8 @@ function handleNodeListClick(node) {
                     <div class="space-y-2">
                         <p><strong>ID:</strong> {{ selectedElement.id }}</p>
                         <p><strong>Name:</strong> {{ selectedElement.name }}</p>
-                        <p v-if="selectedElement.beschreibung"><strong>Description:</strong> {{ selectedElement.beschreibung }}</p>
+                        <p v-if="selectedElement.beschreibung"><strong>Description:</strong> {{
+                            selectedElement.beschreibung }}</p>
                     </div>
                 </div>
 
@@ -216,5 +213,4 @@ function handleNodeListClick(node) {
     </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>

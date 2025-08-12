@@ -2,14 +2,13 @@
 import { ref, onMounted } from 'vue';
 import cytoscape from 'cytoscape';
 import { useRouter } from 'vue-router';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import Swal from 'sweetalert2';
 import DTGLegend from './legends/DTGLegend.vue';
 
 const router = useRouter();
 const nodes = ref([]);
 const edges = ref([]);
-const elements = ref([]);
 const selectedElement = ref(null);
 const selectedType = ref('node'); // 'node' or 'edge'
 const props = defineProps({
@@ -36,7 +35,7 @@ onMounted(() => {
       Object.values(response.data["elements"]["edges"]).forEach(el => {
         if (el.data && el.data.label) {
           el.data.originalLabel = el.data.label;
-          
+
           if (typeof el.data.label === 'object') {
             if (Array.isArray(el.data.label)) {
               el.data.label = el.data.label.join(', ');
@@ -52,7 +51,7 @@ onMounted(() => {
       const cy = cytoscape({
         container: document.getElementById('cy'),
 
-        elements: elements.value,
+        elements: response.data.elements,
 
         style: [
           {
@@ -127,33 +126,27 @@ onMounted(() => {
       cy.on('tap', 'edge', handleEdgeClick);
     })
     .catch(error => {
-      if (error instanceof AxiosError) {
-        if (error.response && error.response.status === 405) {
-          Swal.fire({
-            icon: 'error',
-            title: 'No Domain Transition Graph Available',
-            text: 'Please upload PDDL files first to generate a Domain Transition Graph.',
-            showCancelButton: true,
-            confirmButtonText: 'Upload Files',
-            confirmButtonColor: '#3B82F6',
-            cancelButtonText: 'Stay Here',
-            cancelButtonColor: '#6B7280',
-          }).then((result) => {
-            if (result.isConfirmed) {
-              router.push('/upload');
-            }
-          });
-          isLoading.value = false;
-          return;
-        }
+      if (error.response && error.response.status === 405) {
+        Swal.fire({
+          icon: 'error',
+          title: 'No Domain Transition Graph Available',
+          text: 'Please upload PDDL files first to generate a Domain Transition Graph.',
+          showCancelButton: true,
+          confirmButtonText: 'Upload Files',
+          confirmButtonColor: '#3B82F6',
+          cancelButtonText: 'Stay Here',
+          cancelButtonColor: '#6B7280',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            router.push('/upload');
+          }
+        });
+        isLoading.value = false;
+        return;
       }
       console.error('Error fetching elements:', error);
     });
 });
-
-
-
-
 
 
 function handleNodeClick(event) {
@@ -161,7 +154,7 @@ function handleNodeClick(event) {
   const nodeData = node.data();
   selectedElement.value = nodeData;
   selectedType.value = 'node';
-  
+
   // Scroll to top of the sidebar to show details
   const rightSidebar = document.getElementById('right');
   if (rightSidebar) {
@@ -177,7 +170,7 @@ function handleEdgeClick(event) {
   const edgeData = edge.data();
   selectedElement.value = edgeData;
   selectedType.value = 'edge';
-  
+
   // Scroll to top of the sidebar to show details
   const rightSidebar = document.getElementById('right');
   if (rightSidebar) {
@@ -212,7 +205,8 @@ function getContrastColor(hslColor) {
 <template>
   <div class="flex h-[calc(100vh-4rem)] mt-16">
     <div id="left" class="w-2/3 p-4 relative">
-      <RouterLink to="/causal" class="absolute top-5 left-5 z-10 text-2xl mb-1 bg-white rounded w-12 h-12 flex items-center justify-center shadow">
+      <RouterLink to="/causal"
+        class="absolute top-5 left-5 z-10 text-2xl mb-1 bg-white rounded w-12 h-12 flex items-center justify-center shadow">
         <i class="pi pi-arrow-left"></i>
       </RouterLink>
       <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
@@ -223,13 +217,11 @@ function getContrastColor(hslColor) {
       <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
         <div class="mb-4">
           <div class="flex space-x-2 mb-4">
-            <button 
-              @click="selectedType = 'node'; selectedElement = null" 
+            <button @click="selectedType = 'node'; selectedElement = null"
               :class="['px-3 py-1 rounded text-sm', selectedType === 'node' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
               Nodes
             </button>
-            <button 
-              @click="selectedType = 'edge'; selectedElement = null" 
+            <button @click="selectedType = 'edge'; selectedElement = null"
               :class="['px-3 py-1 rounded text-sm', selectedType === 'edge' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
               Edges
             </button>
@@ -237,7 +229,8 @@ function getContrastColor(hslColor) {
         </div>
 
         <!-- Selected Element Details -->
-        <div v-if="selectedElement && selectedType === 'node'" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+        <div v-if="selectedElement && selectedType === 'node'"
+          class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
           <h3 class="text-lg font-semibold mb-2 text-blue-800">Selected Node</h3>
           <div class="space-y-2">
             <p><strong>ID:</strong> {{ selectedElement.id }}</p>
@@ -246,7 +239,8 @@ function getContrastColor(hslColor) {
           </div>
         </div>
 
-        <div v-if="selectedElement && selectedType === 'edge'" class="mb-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+        <div v-if="selectedElement && selectedType === 'edge'"
+          class="mb-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
           <h3 class="text-lg font-semibold mb-2 text-green-800">Selected Edge</h3>
           <div class="space-y-3">
             <p><strong>ID:</strong> {{ selectedElement.id }}</p>
@@ -255,12 +249,12 @@ function getContrastColor(hslColor) {
             <div v-if="selectedElement.originalLabel">
               <strong>Actions:</strong>
               <div class="mt-2 space-y-2">
-                <div v-for="(params, action) in selectedElement.originalLabel" :key="action" 
-                     class="bg-white rounded border p-3">
+                <div v-for="(params, action) in selectedElement.originalLabel" :key="action"
+                  class="bg-white rounded border p-3">
                   <div class="font-semibold text-green-700 mb-2 capitalize">{{ action }}</div>
                   <div class="space-y-1">
-                    <div v-for="(param, index) in params" :key="index" 
-                         class="text-sm bg-gray-100 rounded px-2 py-1 font-mono">
+                    <div v-for="(param, index) in params" :key="index"
+                      class="text-sm bg-gray-100 rounded px-2 py-1 font-mono">
                       ({{ param }})
                     </div>
                   </div>
@@ -307,5 +301,4 @@ function getContrastColor(hslColor) {
 </template>
 
 
-<style scoped>
-</style>
+<style scoped></style>
