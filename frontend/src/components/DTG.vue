@@ -24,6 +24,7 @@ onMounted(() => {
     .then(response => {
       let colors = generateColors(response.data["metadata"]["num_sccs"]);
 
+      // SCC colors
       Object.values(response.data["elements"]["nodes"]).forEach(el => {
         if (el.data && el.data.scc_id !== undefined) {
           el.data.color = colors[el.data.scc_id];
@@ -31,9 +32,9 @@ onMounted(() => {
         }
       });
 
+      // Edge labels
       Object.values(response.data["elements"]["edges"]).forEach(el => {
         if (el.data && el.data.label) {
-          // Speichere das ursprüngliche Label für detaillierte Anzeige
           el.data.originalLabel = el.data.label;
           
           if (typeof el.data.label === 'object') {
@@ -46,6 +47,8 @@ onMounted(() => {
         }
       });
       elements.value = response.data.elements;
+
+      // cytoscape instance
       const cy = cytoscape({
         container: document.getElementById('cy'),
 

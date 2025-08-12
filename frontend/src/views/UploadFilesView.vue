@@ -110,7 +110,7 @@ function removeFile(index) {
 
 <template>
     <div
-        class="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] p-6 bg-gray-700 shadow-inner overflow-auto flex flex-col items-center">
+        class="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] p-6 dark:bg-gray-700 shadow-inner overflow-auto flex flex-col items-center">
         <div class="w-full max-w-2xl mx-auto p-6 bg-gray-800 text-gray-50 rounded-lg shadow-md mb-8">
             <h2 class="text-lg font-semibold mb-4">Uploaded Files</h2>
             <ul class="divide-y divide-gray-700">
