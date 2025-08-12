@@ -1,12 +1,16 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
 
 const router = useRouter();
 
 const fileInput = ref([]);
+
+onMounted(() => {
+    Swal.close();
+});
 
 function handleFileInput(event) {
     if (!event.target.files || event.target.files.length === 0) {
