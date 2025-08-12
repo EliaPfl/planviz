@@ -148,33 +148,33 @@ function handleNodeListClick(node) {
 </script>
 
 <template>
-    <div class="flex h-[calc(100vh-4rem)] mt-16">
-        <div v-if="isLoading" class="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-0">
+    <div class="flex h-[calc(100vh-4rem)] mt-16 bg-slate-50 dark:bg-neutral-900">
+        <div v-if="isLoading" class="fixed inset-0 bg-white dark:bg-neutral-950 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-0">
             <div class="text-center">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-                <p class="text-gray-600 text-lg">Loading Landmark Graph...</p>
+                <p class="text-slate-600 dark:text-neutral-300 text-lg">Loading Landmark Graph...</p>
             </div>
         </div>
 
         <div v-else-if="error" class="flex items-center justify-center w-full">
             <div class="text-center p-8">
                 <div class="text-red-500 text-6xl mb-4">⚠️</div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-2">Error Loading Graph</h2>
-                <p class="text-gray-600 mb-4">{{ error }}</p>
+                <h2 class="text-xl font-semibold text-slate-800 dark:text-neutral-200 mb-2">Error Loading Graph</h2>
+                <p class="text-slate-600 dark:text-neutral-400 mb-4">{{ error }}</p>
                 <button @click="window.location.reload()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
                     Retry
                 </button>
             </div>
         </div>
 
         <div id="left" class="w-2/3 p-4 relative">
-            <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
+            <div id="cy" class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700"></div>
             <LandmarkLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
-            <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
+            <div class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
                         <button class="px-3 py-1 rounded text-sm bg-blue-500 text-white">
@@ -184,25 +184,25 @@ function handleNodeListClick(node) {
                 </div>
 
                 <!-- Selected Element Details -->
-                <div v-if="selectedElement" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                    <h3 class="text-lg font-semibold mb-2 text-blue-800">Selected Node</h3>
+                <div v-if="selectedElement" class="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-500">
+                    <h3 class="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-300">Selected Node</h3>
                     <div class="space-y-2">
-                        <p><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p><strong>Name:</strong> {{ selectedElement.name }}</p>
-                        <p v-if="selectedElement.beschreibung"><strong>Description:</strong> {{
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name }}</p>
+                        <p v-if="selectedElement.beschreibung" class="text-slate-900 dark:text-neutral-100"><strong>Description:</strong> {{
                             selectedElement.beschreibung }}</p>
                     </div>
                 </div>
 
                 <!-- Nodes List -->
                 <div>
-                    <h2 class="text-lg font-semibold mb-4">All Nodes</h2>
+                    <h2 class="text-lg font-semibold mb-4 text-slate-900 dark:text-neutral-100">All Nodes</h2>
                     <ul class="space-y-2">
                         <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
                             @click="handleNodeListClick(node)"
-                            :class="['p-2 rounded hover:bg-blue-50 cursor-pointer', selectedElement?.id === node.id ? 'bg-blue-100 border border-blue-300' : '']">
-                            <strong>{{ node.name }}</strong>
-                            <p v-if="node.beschreibung" class="text-sm text-gray-600">
+                            :class="['p-2 rounded transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer', selectedElement?.id === node.id ? 'bg-blue-100 dark:bg-blue-950/50 border border-blue-300 dark:border-blue-600' : '']">
+                            <strong class="text-slate-900 dark:text-neutral-100">{{ node.name }}</strong>
+                            <p v-if="node.beschreibung" class="text-sm text-slate-600 dark:text-neutral-400">
                                 {{ node.beschreibung }}
                             </p>
                         </li>

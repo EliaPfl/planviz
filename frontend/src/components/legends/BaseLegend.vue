@@ -2,7 +2,7 @@
   <div class="legend-container absolute top-5 right-5 z-20">
     <!-- Toggle Button -->
     <button @click="toggleLegend"
-      class="bg-blue-600 text-white p-3 rounded-lg shadow-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 relative"
+      class="bg-blue-500 text-white p-3 rounded-lg shadow-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2 relative"
       :class="{ 'rounded-b-none': isOpen }">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -17,15 +17,15 @@
 
     <!-- Legend Content -->
     <div v-show="isOpen"
-      class="bg-white border border-gray-200 rounded-b-lg rounded-tl-lg shadow-lg p-4 min-w-80 transition-all duration-200 absolute right-0 top-[calc(100%+1px)] z-30"
+      class="bg-white dark:bg-neutral-700 border border-slate-200 dark:border-neutral-700 rounded-b-lg rounded-tl-lg shadow-lg p-4 min-w-80 transition-all duration-200 absolute right-0 top-[calc(100%+1px)] z-30"
       :class="{ 'opacity-100 translate-y-0': isOpen, 'opacity-0 -translate-y-2': !isOpen }">
-      <h3 class="text-lg font-semibold mb-3 text-gray-800">{{ subtitle }}</h3>
+      <h3 class="text-lg font-semibold mb-3 text-slate-800 dark:text-neutral-100">{{ subtitle }}</h3>
 
       <!-- Slot for legend content -->
       <slot name="legend-content"></slot>
 
-      <div v-if="description" class="mt-4 pt-3 border-t border-gray-200">
-        <p class="text-xs text-gray-500">
+      <div v-if="description" class="mt-4 pt-3 border-t border-slate-200 dark:border-neutral-600">
+        <p class="text-xs text-slate-500 dark:text-neutral-400">
           {{ description }}
         </p>
       </div>
