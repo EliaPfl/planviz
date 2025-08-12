@@ -5,42 +5,42 @@
       <div class="space-y-3">
         <!-- Node Types -->
         <div class="mb-4">
-          <h4 class="font-medium text-gray-700 mb-2">Knoten</h4>
+          <h4 class="font-medium text-slate-700 dark:text-neutral-100 mb-2">Knoten</h4>
 
           <div class="flex items-center gap-3 mb-2">
             <div class="flex-shrink-0">
-              <div class="w-10 h-6 bg-slate-400 rounded border-4 border-green-600"></div>
+              <div class="w-10 h-6 bg-slate-400 dark:bg-neutral-500 rounded border-4 border-green-600"></div>
             </div>
             <div>
-              <span class="font-medium text-gray-800">Startwert</span>
-              <p class="text-sm text-gray-600">Anfangswert der Variable</p>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">Startwert</span>
+              <p class="text-sm text-slate-600 dark:text-neutral-400">Anfangswert der Variable</p>
             </div>
           </div>
 
           <div class="flex items-center gap-3 mb-2">
             <div class="flex-shrink-0">
-              <div class="w-10 h-6 bg-slate-400 rounded border-4 border-red-600"></div>
+              <div class="w-10 h-6 bg-slate-400 dark:bg-neutral-500 rounded border-4 border-red-600"></div>
             </div>
             <div>
-              <span class="font-medium text-gray-800">Zielwert</span>
-              <p class="text-sm text-gray-600">Gewünschter Endwert</p>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">Zielwert</span>
+              <p class="text-sm text-slate-600 dark:text-neutral-400">Gewünschter Endwert</p>
             </div>
           </div>
 
           <div class="flex items-center gap-3">
             <div class="flex-shrink-0">
-              <div class="w-10 h-6 bg-slate-400 rounded"></div>
+              <div class="w-10 h-6 bg-slate-400 dark:bg-neutral-500 rounded"></div>
             </div>
             <div>
-              <span class="font-medium text-gray-800">Zwischenwert</span>
-              <p class="text-sm text-gray-600"></p>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">Zwischenwert</span>
+              <p class="text-sm text-slate-600 dark:text-neutral-400"></p>
             </div>
           </div>
         </div>
 
         <!-- Edge Types -->
         <div>
-          <h4 class="font-medium text-gray-700 mb-2">Kanten</h4>
+          <h4 class="font-medium text-slate-700 dark:text-neutral-100 mb-2">Kanten</h4>
 
           <div class="flex items-center gap-3 mb-2">
             <div class="flex-shrink-0">
@@ -50,16 +50,16 @@
               </svg>
             </div>
             <div>
-              <span class="font-medium text-gray-800">Übergang</span>
-              <p class="text-sm text-gray-600">mit Aktionen</p>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">Übergang</span>
+              <p class="text-sm text-slate-600 dark:text-neutral-400">mit Aktionen</p>
             </div>
           </div>
         </div>
 
         <!-- Colors -->
         <div>
-          <h4 class="font-medium text-gray-700 mb-2">Farben</h4>
-          <p class="text-sm text-gray-600">Jede Farbe markiert eine starke Zusammenhangskomponente im Graphen.
+          <h4 class="font-medium text-slate-700 dark:text-neutral-100 mb-2">Farben</h4>
+          <p class="text-sm text-slate-600 dark:text-neutral-400">Jede Farbe markiert eine starke Zusammenhangskomponente im Graphen.
           </p>
         </div>
       </div>
