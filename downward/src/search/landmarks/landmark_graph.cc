@@ -9,7 +9,6 @@
 #include <vector>
 #include <fstream>
 #include "../utils/json.hpp"
-#include "../algorithms/sccs.h"
 
 
 using namespace std;
@@ -212,18 +211,6 @@ void LandmarkGraph::export_graph(const fs::path &output_path, const VariablesPro
         }
     }
 
-    // scc
-    auto sccs = sccs::compute_maximal_sccs(successors);
-    std::vector<int> scc_ids(successors.size(), -1); //maps Node ID to SCC ID
-    for (unsigned long i = 0; i < sccs.size(); ++i) {
-        for (int node : sccs[i]) {
-            scc_ids[node] = i;
-        }
-    }
-
-    for (unsigned long i = 0; i < jnodes.size(); ++i) {
-        jnodes[i]["data"]["scc_id"] = scc_ids[i];
-    }
 
     json graph_json;
     graph_json["elements"] = {
@@ -232,7 +219,6 @@ void LandmarkGraph::export_graph(const fs::path &output_path, const VariablesPro
     };
     graph_json["metadata"] = {
         {"num_landmarks", nodes.size()},
-        {"num_sccs", sccs.size()},
         {"num_conjunctive_landmarks", num_conjunctive_landmarks},
         {"num_disjunctive_landmarks", num_disjunctive_landmarks}
     };
