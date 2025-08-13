@@ -33,6 +33,7 @@ function message(message, icon) {
         showConfirmButton: false,
         timer: 3000,
         timerProgressBar: true,
+        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
         didOpen: (toast) => {
             toast.onmouseenter = Swal.stopTimer;
             toast.onmouseleave = Swal.resumeTimer;
@@ -67,6 +68,7 @@ function handleSubmit() {
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,
+        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
         didOpen: () => {
             Swal.showLoading();
             const timerEl = Swal.getHtmlContainer().querySelector('#swal-timer');
