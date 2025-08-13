@@ -100,6 +100,7 @@ onMounted(() => {
                     confirmButtonColor: '#3B82F6',
                     cancelButtonText: 'Stay Here',
                     cancelButtonColor: '#6B7280',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         router.push('/upload');
