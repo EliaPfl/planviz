@@ -12,6 +12,7 @@ const nodes = ref([]);
 const edges = ref([]);
 const selectedElement = ref(null);
 const selectedType = ref('node'); // 'node' or 'edge'
+const cy = ref(null);
 const ID = route.params.ID;
 
 onMounted(() => {
@@ -43,7 +44,7 @@ onMounted(() => {
             });
 
             // cytoscape instance
-            const cy = cytoscape({
+            cy.value = cytoscape({
                 container: document.getElementById('cy'),
 
                 elements: response.data.elements,
@@ -80,7 +81,11 @@ onMounted(() => {
                             'target-arrow-color': '#ccc',
                             'target-arrow-shape': 'triangle',
                             'target-arrow-scale': 3,
-                            'curve-style': 'bezier'
+                            'curve-style': 'bezier',
+                            'color': '#374151',
+                            'text-background-color': '#ffffff',
+                            'text-background-opacity': 0.85,
+                            'text-background-padding': '3px'
                         }
                     },
                     {
@@ -115,10 +120,26 @@ onMounted(() => {
                     animate: false,
                 }
             });
-            nodes.value = cy.nodes().map(node => node.data());
-            edges.value = cy.edges().map(edge => edge.data());
-            cy.on('tap', 'node', handleNodeClick);
-            cy.on('tap', 'edge', handleEdgeClick);
+            nodes.value = cy.value.nodes().map(node => node.data());
+            edges.value = cy.value.edges().map(edge => edge.data());
+            cy.value.on('tap', 'node', handleNodeClick);
+            cy.value.on('tap', 'edge', handleEdgeClick);
+            
+            // Initial edge style update
+            updateEdgeStyles();
+            
+            // Listen for dark mode changes
+            const darkModeObserver = new MutationObserver(() => {
+                updateEdgeStyles();
+            });
+            
+            darkModeObserver.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['class']
+            });
+            
+            // Also listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateEdgeStyles);
         })
         .catch(error => {
             if (error.response && error.response.status === 405) {
@@ -131,6 +152,7 @@ onMounted(() => {
                     confirmButtonColor: '#3B82F6',
                     cancelButtonText: 'Stay Here',
                     cancelButtonColor: '#6B7280',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
                 }).then((result) => {
                     if (result.isConfirmed) {
                         router.push('/upload');
@@ -195,29 +217,48 @@ function generateColors(count) {
 function getContrastColor(hslColor) {
     return `rgb(0, 0, 0)`;
 }
+
+function updateEdgeStyles() {
+    if (!cy.value) return;
+    
+    const isDark = document.documentElement.classList.contains('dark') || 
+                   window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    const edgeStyles = {
+        'color': isDark ? '#d4d4d8' : '#374151',
+        'text-background-color': isDark ? '#262626' : '#ffffff',
+        'text-background-opacity': 0.85,
+        'text-background-padding': '3px'
+    };
+    
+    cy.value.style()
+        .selector('edge')
+        .style(edgeStyles)
+        .update();
+}
 </script>
 
 <template>
-    <div class="flex h-[calc(100vh-4rem)] mt-16">
+    <div class="flex h-[calc(100vh-4rem)] mt-16 bg-slate-50 dark:bg-neutral-900">
         <div id="left" class="w-2/3 p-4 relative">
             <RouterLink to="/causal"
-                class="absolute top-5 left-5 z-10 text-2xl mb-1 bg-white rounded w-12 h-12 flex items-center justify-center shadow">
+                class="absolute top-5 left-5 z-10 text-2xl mb-1 bg-white dark:bg-neutral-700 text-slate-700 dark:text-white rounded w-12 h-12 flex items-center justify-center shadow-lg border border-slate-200 dark:border-neutral-600 hover:bg-slate-50 dark:hover:bg-neutral-600 transition-colors">
                 <i class="pi pi-arrow-left"></i>
             </RouterLink>
-            <div id="cy" class="w-full h-full bg-gray-100 rounded-lg shadow-inner"></div>
+            <div id="cy" class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700"></div>
             <DTGLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
-            <div class="bg-gray-50 h-full overflow-y-auto rounded-lg shadow-inner p-4">
+            <div class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
                         <button @click="selectedType = 'node'; selectedElement = null"
-                            :class="['px-3 py-1 rounded text-sm', selectedType === 'node' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
+                            :class="['px-3 py-1 rounded text-sm transition-colors', selectedType === 'node' ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-neutral-700 text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-600']">
                             Nodes
                         </button>
                         <button @click="selectedType = 'edge'; selectedElement = null"
-                            :class="['px-3 py-1 rounded text-sm', selectedType === 'edge' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700']">
+                            :class="['px-3 py-1 rounded text-sm transition-colors', selectedType === 'edge' ? 'bg-blue-500 text-white' : 'bg-slate-100 dark:bg-neutral-700 text-slate-700 dark:text-neutral-300 hover:bg-slate-200 dark:hover:bg-neutral-600']">
                             Edges
                         </button>
                     </div>
@@ -225,32 +266,32 @@ function getContrastColor(hslColor) {
 
                 <!-- Selected Element Details -->
                 <div v-if="selectedElement && selectedType === 'node'"
-                    class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                    <h3 class="text-lg font-semibold mb-2 text-blue-800">Selected Node</h3>
+                    class="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-500">
+                    <h3 class="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-300">Selected Node</h3>
                     <div class="space-y-2">
-                        <p><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p><strong>Name:</strong> {{ selectedElement.name }}</p>
-                        <p v-if="selectedElement.scc_id !== undefined"><strong>SCC ID:</strong> {{
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name }}</p>
+                        <p v-if="selectedElement.scc_id !== undefined" class="text-slate-900 dark:text-neutral-100"><strong>SCC ID:</strong> {{
                             selectedElement.scc_id }}</p>
                     </div>
                 </div>
 
                 <div v-if="selectedElement && selectedType === 'edge'"
-                    class="mb-6 p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                    <h3 class="text-lg font-semibold mb-2 text-green-800">Selected Edge</h3>
+                    class="mb-6 p-4 bg-green-50 dark:bg-green-950/50 rounded-lg border border-green-500">
+                    <h3 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-300">Selected Edge</h3>
                     <div class="space-y-3">
-                        <p><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p><strong>From:</strong> {{ getNodeName(selectedElement.source) }}</p>
-                        <p><strong>To:</strong> {{ getNodeName(selectedElement.target) }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>From:</strong> {{ getNodeName(selectedElement.source) }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>To:</strong> {{ getNodeName(selectedElement.target) }}</p>
                         <div v-if="selectedElement.originalLabel">
-                            <strong>Actions:</strong>
+                            <strong class="text-slate-900 dark:text-neutral-100">Actions:</strong>
                             <div class="mt-2 space-y-2">
                                 <div v-for="(params, action) in selectedElement.originalLabel" :key="action"
-                                    class="bg-white rounded border p-3">
-                                    <div class="font-semibold text-green-700 mb-2 capitalize">{{ action }}</div>
+                                    class="bg-slate-50 dark:bg-neutral-800 rounded border border-slate-200 dark:border-neutral-600 p-3">
+                                    <div class="font-semibold text-green-700 dark:text-green-300 mb-2 capitalize">{{ action }}</div>
                                     <div class="space-y-1">
                                         <div v-for="(param, index) in params" :key="index"
-                                            class="text-sm bg-gray-100 rounded px-2 py-1 font-mono">
+                                            class="text-sm bg-slate-100 dark:bg-neutral-700 rounded px-2 py-1 font-mono text-slate-900 dark:text-neutral-100">
                                             ({{ param }})
                                         </div>
                                     </div>
@@ -262,13 +303,13 @@ function getContrastColor(hslColor) {
 
                 <!-- Nodes List -->
                 <div v-show="selectedType === 'node'">
-                    <h2 class="text-lg font-semibold mb-4">All Nodes</h2>
+                    <h2 class="text-lg font-semibold mb-4 text-slate-900 dark:text-neutral-100">All Nodes</h2>
                     <ul class="space-y-2">
                         <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
                             @click="selectedElement = node; selectedType = 'node'"
-                            :class="['p-2 rounded hover:bg-blue-50 cursor-pointer', selectedElement?.id === node.id && selectedType === 'node' ? 'bg-blue-100 border border-blue-300' : '']">
-                            <strong>{{ node.name }}</strong>
-                            <p v-if="node.beschreibung" class="text-sm text-gray-600">
+                            :class="['p-2 rounded transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer', selectedElement?.id === node.id && selectedType === 'node' ? 'bg-blue-100 dark:bg-blue-950/50 border border-blue-300 dark:border-blue-600' : '']">
+                            <strong class="text-slate-900 dark:text-neutral-100">{{ node.name }}</strong>
+                            <p v-if="node.beschreibung" class="text-sm text-slate-600 dark:text-neutral-400">
                                 {{ node.beschreibung }}
                             </p>
                         </li>
@@ -277,14 +318,14 @@ function getContrastColor(hslColor) {
 
                 <!-- Edges List -->
                 <div v-show="selectedType === 'edge'">
-                    <h2 class="text-lg font-semibold mb-4">All Edges</h2>
+                    <h2 class="text-lg font-semibold mb-4 text-slate-900 dark:text-neutral-100">All Edges</h2>
                     <ul class="space-y-2">
                         <li v-for="edge in edges" :key="edge.id" :id="`edge-` + edge.id"
                             @click="selectedElement = edge; selectedType = 'edge'"
-                            :class="['p-2 rounded hover:bg-green-50 cursor-pointer', selectedElement?.id === edge.id && selectedType === 'edge' ? 'bg-green-100 border border-green-300' : '']">
+                            :class="['p-2 rounded transition-colors hover:bg-green-50 dark:hover:bg-green-950/30 cursor-pointer', selectedElement?.id === edge.id && selectedType === 'edge' ? 'bg-green-100 dark:bg-green-950/50 border border-green-300 dark:border-green-600' : '']">
                             <div class="text-sm">
-                                <strong>{{ getNodeName(edge.source) }} → {{ getNodeName(edge.target) }}</strong>
-                                <p v-if="edge.label" class="text-gray-600 mt-1">
+                                <strong class="text-slate-900 dark:text-neutral-100">{{ getNodeName(edge.source) }} → {{ getNodeName(edge.target) }}</strong>
+                                <p v-if="edge.label" class="text-slate-600 dark:text-neutral-400 mt-1">
                                     {{ edge.label }}
                                 </p>
                             </div>
