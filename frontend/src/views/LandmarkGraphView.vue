@@ -8,11 +8,9 @@ import LandmarkLegend from '../components/legends/LandmarkLegend.vue';
 
 const router = useRouter();
 const nodes = ref([]);
-const edges = ref([]);
 const selectedElement = ref(null);
 const selectedType = ref('node');
 const isLoading = ref(true);
-const error = ref(null);
 
 onMounted(() => {
     isLoading.value = true;
@@ -83,11 +81,9 @@ onMounted(() => {
             });
 
             nodes.value = cy.nodes().map(node => node.data());
-            edges.value = cy.edges().map(edge => edge.data());
             cy.on('tap', 'node', handleNodeClick);
 
             isLoading.value = false;
-            console.log(isLoading.value);
         })
         .catch(error => {
             if (error.response && error.response.status === 405) {
@@ -108,9 +104,17 @@ onMounted(() => {
                 });
                 isLoading.value = false;
                 return;
+            } else if (error.response) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error Fetching Landmark Graph',
+                    text: error.response.data.message || 'An unexpected error occurred.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3B82F6',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+                });
             }
             console.error('Error fetching elements:', error);
-            error.value = 'Failed to load Causal Graph. Please try again later.';
             isLoading.value = false;
         });
 
@@ -150,32 +154,24 @@ function handleNodeListClick(node) {
 
 <template>
     <div class="flex h-[calc(100vh-4rem)] mt-16 bg-slate-50 dark:bg-neutral-900">
-        <div v-if="isLoading" class="fixed inset-0 bg-white dark:bg-neutral-950 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-0">
+        <div v-if="isLoading"
+            class="fixed inset-0 bg-white dark:bg-neutral-950 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-0">
             <div class="text-center">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
                 <p class="text-slate-600 dark:text-neutral-300 text-lg">Loading Landmark Graph...</p>
             </div>
         </div>
 
-        <div v-else-if="error" class="flex items-center justify-center w-full">
-            <div class="text-center p-8">
-                <div class="text-red-500 text-6xl mb-4">⚠️</div>
-                <h2 class="text-xl font-semibold text-slate-800 dark:text-neutral-200 mb-2">Error Loading Graph</h2>
-                <p class="text-slate-600 dark:text-neutral-400 mb-4">{{ error }}</p>
-                <button @click="window.location.reload()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-                    Retry
-                </button>
-            </div>
-        </div>
-
         <div id="left" class="w-2/3 p-4 relative">
-            <div id="cy" class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700"></div>
+            <div id="cy"
+                class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700">
+            </div>
             <LandmarkLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
-            <div class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
+            <div
+                class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
                         <button class="px-3 py-1 rounded text-sm bg-blue-500 text-white">
@@ -185,13 +181,18 @@ function handleNodeListClick(node) {
                 </div>
 
                 <!-- Selected Element Details -->
-                <div v-if="selectedElement" class="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-500">
+                <div v-if="selectedElement"
+                    class="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-500">
                     <h3 class="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-300">Selected Node</h3>
                     <div class="space-y-2">
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name }}</p>
-                        <p v-if="selectedElement.beschreibung" class="text-slate-900 dark:text-neutral-100"><strong>Description:</strong> {{
-                            selectedElement.beschreibung }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}
+                        </p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name
+                            }}</p>
+                        <p v-if="selectedElement.beschreibung" class="text-slate-900 dark:text-neutral-100">
+                            <strong>Description:</strong> {{
+                                selectedElement.beschreibung }}
+                        </p>
                     </div>
                 </div>
 
