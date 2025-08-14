@@ -33,6 +33,7 @@ function message(message, icon) {
         showConfirmButton: false,
         timer: 3000,
         timerProgressBar: true,
+        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
         didOpen: (toast) => {
             toast.onmouseenter = Swal.stopTimer;
             toast.onmouseleave = Swal.resumeTimer;
@@ -67,6 +68,7 @@ function handleSubmit() {
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,
+        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
         didOpen: () => {
             Swal.showLoading();
             const timerEl = Swal.getHtmlContainer().querySelector('#swal-timer');
@@ -114,22 +116,22 @@ function removeFile(index) {
 
 <template>
     <div
-        class="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] p-6 dark:bg-gray-700 shadow-inner overflow-auto flex flex-col items-center">
-        <div class="w-full max-w-2xl mx-auto p-6 bg-gray-800 text-gray-50 rounded-lg shadow-md mb-8">
+        class="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] p-6 bg-slate-50 dark:bg-neutral-900 shadow-inner overflow-auto flex flex-col items-center">
+        <div class="w-full max-w-2xl mx-auto p-6 bg-white dark:bg-neutral-800 text-slate-900 dark:text-neutral-100 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 mb-8">
             <h2 class="text-lg font-semibold mb-4">Uploaded Files</h2>
-            <ul class="divide-y divide-gray-700">
+            <ul class="divide-y divide-slate-200 dark:divide-neutral-700">
                 <li v-for="(file, index) in fileInput" :key="index" class="flex justify-between items-center py-2">
                     <span>{{ file.name }}</span>
-                    <i @click="removeFile(index)" class="pi pi-times cursor-pointer hover:text-red-400"></i>
+                    <i @click="removeFile(index)" class="pi pi-times cursor-pointer hover:text-red-400 transition-colors"></i>
                 </li>
             </ul>
         </div>
 
         <form @submit.prevent="handleSubmit" class="w-full max-w-2xl mx-auto flex flex-col space-y-6">
             <label for="domainInput" class="w-full h-64 flex flex-col items-center justify-center p-6
-               border-2 border-dashed border-gray-600 rounded-lg
-               hover:border-blue-400 transition-colors">
-                <i class="pi pi-upload text-5xl text-gray-400 mb-4"></i>
+               border-2 border-dashed border-slate-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800
+               hover:border-blue-400 dark:hover:border-blue-400 transition-colors">
+                <i class="pi pi-upload text-5xl text-slate-400 dark:text-neutral-400 mb-4"></i>
                 <input id="domainInput" name="domain" type="file" accept=".pddl" multiple class="sr-only"
                     @change="handleFileInput($event)" />
             </label>

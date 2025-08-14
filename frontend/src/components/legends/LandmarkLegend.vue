@@ -5,7 +5,7 @@
       <div class="space-y-3">
         <!-- Node Types -->
         <div class="mb-4">
-          <h4 class="font-medium text-gray-700 mb-2">Knoten</h4>
+          <h4 class="font-medium text-slate-700 dark:text-neutral-100 mb-2">Knoten</h4>
 
           <div class="flex items-center gap-3 mb-2">
             <div class="flex-shrink-0">
@@ -14,15 +14,15 @@
               </svg>
             </div>
             <div>
-              <span class="font-medium text-gray-800">Landmarks</span>
-              <p class="text-sm text-gray-600">aus fastdownward</p>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">Landmarks</span>
+              <p class="text-sm text-slate-600 dark:text-neutral-400">aus fastdownward</p>
             </div>
           </div>
         </div>
 
         <!-- Edge Types -->
         <div>
-          <h4 class="font-medium text-gray-700 mb-2">Kanten</h4>
+          <h4 class="font-medium text-slate-700 dark:text-neutral-100 mb-2">Kanten</h4>
           <div class="flex items-center gap-3">
             <div class="flex-shrink-0">
               <svg width="40" height="20" viewBox="0 0 40 20">
@@ -31,7 +31,7 @@
               </svg>
             </div>
             <div>
-              <span class="font-medium text-gray-800">NECESSARY & GREEDY_NECESSARY</span>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">NECESSARY & GREEDY_NECESSARY</span>
             </div>
           </div>
 
@@ -43,7 +43,7 @@
               </svg>
             </div>
             <div>
-              <span class="font-medium text-gray-800">NATURAL</span>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">NATURAL</span>
             </div>
           </div>
 
@@ -55,7 +55,7 @@
               </svg>
             </div>
             <div>
-              <span class="font-medium text-gray-800">REASONABLE</span>
+              <span class="font-medium text-slate-800 dark:text-neutral-200">REASONABLE</span>
             </div>
           </div>
         </div>
