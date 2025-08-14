@@ -3,21 +3,18 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    ports:
-      - "8000:8000"
-    volumes:
-      - temp_files:/app/temp_files
-      - out_graphs:/app/out_graphs
+    mem_limit: 4g
+    memswap_limit: 6g
+    cpus: '2.0'
+    shm_size: '2gb'
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=http://backend:8000
     ports:
-      - "8080:80"
+      - "8080:80" # localhost:8080 -> container:80
     depends_on:
       - backend
-volumes:
-  temp_files:
-  out_graphs:
+    mem_limit: 2g
+    memswap_limit: 3g
