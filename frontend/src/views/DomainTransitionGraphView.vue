@@ -5,6 +5,9 @@ import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import DTGLegend from '../components/legends/DTGLegend.vue';
+import { scrollSidebarToTop } from '../utils/sidebar.js';
+import { generateColors, getContrastColor } from '../utils/colors.js';
+import { isDarkMode } from '@/utils/darkMode';
 
 const router = useRouter();
 const route = useRoute();
@@ -18,7 +21,7 @@ const ID = route.params.ID;
 onMounted(() => {
     axios.get(`/api/dtg/${ID}`)
         .then(response => {
-            let colors = generateColors(response.data["metadata"]["num_sccs"]);
+            let colors = generateColors(response.data["metadata"]["num_sccs"], 225);
 
             // SCC colors
             Object.values(response.data["elements"]["nodes"]).forEach(el => {
@@ -60,8 +63,8 @@ onMounted(() => {
                             'text-valign': 'center',
                             'text-halign': 'center',
                             'padding': '10px',
-                            'background-color': '#0074D9',
-                            'color': '#fff',
+                            'background-color': 'data(color)',
+                            'color': 'data(fontColor)',
                             'font-size': 12,
                             'width': 'label',
                             'height': 'label',
@@ -120,25 +123,27 @@ onMounted(() => {
                     animate: false,
                 }
             });
+
             nodes.value = cy.value.nodes().map(node => node.data());
             edges.value = cy.value.edges().map(edge => edge.data());
+
+            // Event listeners for node and edge clicks
             cy.value.on('tap', 'node', handleNodeClick);
             cy.value.on('tap', 'edge', handleEdgeClick);
-            
+
             // Initial edge style update
             updateEdgeStyles();
-            
+
             // Listen for dark mode changes
             const darkModeObserver = new MutationObserver(() => {
                 updateEdgeStyles();
             });
-            
+
             darkModeObserver.observe(document.documentElement, {
                 attributes: true,
                 attributeFilter: ['class']
             });
-            
-            // Also listen for system theme changes
+
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateEdgeStyles);
         })
         .catch(error => {
@@ -152,7 +157,7 @@ onMounted(() => {
                     confirmButtonColor: '#3B82F6',
                     cancelButtonText: 'Stay Here',
                     cancelButtonColor: '#6B7280',
-                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
+                    theme: isDarkMode() ? 'dark' : 'light',
                 }).then((result) => {
                     if (result.isConfirmed) {
                         router.push('/upload');
@@ -165,21 +170,13 @@ onMounted(() => {
         });
 });
 
-
 function handleNodeClick(event) {
     const node = event.target;
     const nodeData = node.data();
     selectedElement.value = nodeData;
     selectedType.value = 'node';
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function handleEdgeClick(event) {
@@ -188,14 +185,14 @@ function handleEdgeClick(event) {
     selectedElement.value = edgeData;
     selectedType.value = 'edge';
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
+}
+
+function handleListClick(element, type = 'node') {
+    selectedElement.value = element;
+    selectedType.value = type;
+
+    scrollSidebarToTop();
 }
 
 function getNodeName(nodeId) {
@@ -203,34 +200,16 @@ function getNodeName(nodeId) {
     return node ? node.name : `Node ${nodeId}`;
 }
 
-function generateColors(count) {
-    const colors = [];
-    for (let i = 0; i < count; i++) {
-        const hue = 180 - ((i * 360 / count) % 360);    // Gleichmäßig verteilte Farbtöne
-        const saturation = 70 + (i % 3) * 10;   // Variiert zwischen 70-90%
-        const lightness = 50 + (i % 2) * 10;    // Variiert zwischen 50-60%
-        colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
-    }
-    return colors;
-}
-
-function getContrastColor(hslColor) {
-    return `rgb(0, 0, 0)`;
-}
-
 function updateEdgeStyles() {
     if (!cy.value) return;
-    
-    const isDark = document.documentElement.classList.contains('dark') || 
-                   window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
+
     const edgeStyles = {
-        'color': isDark ? '#d4d4d8' : '#374151',
-        'text-background-color': isDark ? '#262626' : '#ffffff',
+        'color': isDarkMode() ? '#d4d4d8' : '#374151',
+        'text-background-color': isDarkMode() ? '#262626' : '#ffffff',
         'text-background-opacity': 0.85,
         'text-background-padding': '3px'
     };
-    
+
     cy.value.style()
         .selector('edge')
         .style(edgeStyles)
@@ -245,12 +224,15 @@ function updateEdgeStyles() {
                 class="absolute top-5 left-5 z-10 text-2xl mb-1 bg-white dark:bg-neutral-700 text-slate-700 dark:text-white rounded w-12 h-12 flex items-center justify-center shadow-lg border border-slate-200 dark:border-neutral-600 hover:bg-slate-50 dark:hover:bg-neutral-600 transition-colors">
                 <i class="pi pi-arrow-left"></i>
             </RouterLink>
-            <div id="cy" class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700"></div>
+            <div id="cy"
+                class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700">
+            </div>
             <DTGLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
-            <div class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
+            <div
+                class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
                         <button @click="selectedType = 'node'; selectedElement = null"
@@ -269,10 +251,13 @@ function updateEdgeStyles() {
                     class="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-500">
                     <h3 class="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-300">Selected Node</h3>
                     <div class="space-y-2">
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name }}</p>
-                        <p v-if="selectedElement.scc_id !== undefined" class="text-slate-900 dark:text-neutral-100"><strong>SCC ID:</strong> {{
-                            selectedElement.scc_id }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}
+                        </p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name
+                            }}</p>
+                        <p v-if="selectedElement.scc_id !== undefined" class="text-slate-900 dark:text-neutral-100">
+                            <strong>SCC ID:</strong> {{
+                                selectedElement.scc_id }}</p>
                     </div>
                 </div>
 
@@ -280,15 +265,19 @@ function updateEdgeStyles() {
                     class="mb-6 p-4 bg-green-50 dark:bg-green-950/50 rounded-lg border border-green-500">
                     <h3 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-300">Selected Edge</h3>
                     <div class="space-y-3">
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>From:</strong> {{ getNodeName(selectedElement.source) }}</p>
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>To:</strong> {{ getNodeName(selectedElement.target) }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}
+                        </p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>From:</strong> {{
+                            getNodeName(selectedElement.source) }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>To:</strong> {{
+                            getNodeName(selectedElement.target) }}</p>
                         <div v-if="selectedElement.originalLabel">
                             <strong class="text-slate-900 dark:text-neutral-100">Actions:</strong>
                             <div class="mt-2 space-y-2">
                                 <div v-for="(params, action) in selectedElement.originalLabel" :key="action"
                                     class="bg-slate-50 dark:bg-neutral-800 rounded border border-slate-200 dark:border-neutral-600 p-3">
-                                    <div class="font-semibold text-green-700 dark:text-green-300 mb-2 capitalize">{{ action }}</div>
+                                    <div class="font-semibold text-green-700 dark:text-green-300 mb-2 capitalize">{{
+                                        action }}</div>
                                     <div class="space-y-1">
                                         <div v-for="(param, index) in params" :key="index"
                                             class="text-sm bg-slate-100 dark:bg-neutral-700 rounded px-2 py-1 font-mono text-slate-900 dark:text-neutral-100">
@@ -306,7 +295,7 @@ function updateEdgeStyles() {
                     <h2 class="text-lg font-semibold mb-4 text-slate-900 dark:text-neutral-100">All Nodes</h2>
                     <ul class="space-y-2">
                         <li v-for="node in nodes" :key="node.id" :id="`node-` + node.id"
-                            @click="selectedElement = node; selectedType = 'node'"
+                            @click="handleListClick(node, 'node')"
                             :class="['p-2 rounded transition-colors hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer', selectedElement?.id === node.id && selectedType === 'node' ? 'bg-blue-100 dark:bg-blue-950/50 border border-blue-300 dark:border-blue-600' : '']">
                             <strong class="text-slate-900 dark:text-neutral-100">{{ node.name }}</strong>
                             <p v-if="node.beschreibung" class="text-sm text-slate-600 dark:text-neutral-400">
@@ -321,10 +310,11 @@ function updateEdgeStyles() {
                     <h2 class="text-lg font-semibold mb-4 text-slate-900 dark:text-neutral-100">All Edges</h2>
                     <ul class="space-y-2">
                         <li v-for="edge in edges" :key="edge.id" :id="`edge-` + edge.id"
-                            @click="selectedElement = edge; selectedType = 'edge'"
+                            @click="handleListClick(edge, 'edge')"
                             :class="['p-2 rounded transition-colors hover:bg-green-50 dark:hover:bg-green-950/30 cursor-pointer', selectedElement?.id === edge.id && selectedType === 'edge' ? 'bg-green-100 dark:bg-green-950/50 border border-green-300 dark:border-green-600' : '']">
                             <div class="text-sm">
-                                <strong class="text-slate-900 dark:text-neutral-100">{{ getNodeName(edge.source) }} → {{ getNodeName(edge.target) }}</strong>
+                                <strong class="text-slate-900 dark:text-neutral-100">{{ getNodeName(edge.source) }} → {{
+                                    getNodeName(edge.target) }}</strong>
                                 <p v-if="edge.label" class="text-slate-600 dark:text-neutral-400 mt-1">
                                     {{ edge.label }}
                                 </p>
