@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router';
 import axios, { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
 import CausalLegend from '../components/legends/CausalLegend.vue';
+import { scrollSidebarToTop } from '../utils/sidebar.js';
+import { generateColors, getContrastColor } from '../utils/colors.js';
+import { isDarkMode } from '@/utils/darkMode';
 
 
 const router = useRouter();
@@ -112,6 +115,7 @@ onMounted(() => {
             nodes.value = cy.value.nodes().map(node => node.data());
             edges.value = cy.value.edges().map(edge => edge.data());
 
+            // Event listeners for node and edge clicks
             cy.value.on('tap', 'node', handleNodeClick);
             cy.value.on('tap', 'edge', handleEdgeClick);
             cy.value.on('tap', function (evt) {
@@ -125,6 +129,7 @@ onMounted(() => {
 
                 router.push({ name: 'DomainTransitionGraph', params: { ID: nodeId } });
             });
+
             isLoading.value = false;
             console.log(isLoading.value);
         })
@@ -140,7 +145,7 @@ onMounted(() => {
                         confirmButtonColor: '#3B82F6',
                         cancelButtonText: 'Stay Here',
                         cancelButtonColor: '#6B7280',
-                        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
+                        theme: isDarkMode() ? 'dark' : 'light',
                     }).then((result) => {
                         if (result.isConfirmed) {
                             router.push('/upload');
@@ -167,14 +172,7 @@ function handleNodeClick(event) {
     node.addClass('highlighted');
     node.connectedEdges().addClass('highlighted');
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function handleEdgeClick(event) {
@@ -186,14 +184,7 @@ function handleEdgeClick(event) {
     cy.value.elements().removeClass('highlighted');
     edge.addClass('highlighted');
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function handleListClick(element, type = 'node') {
@@ -213,34 +204,12 @@ function handleListClick(element, type = 'node') {
         }
     }
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function getNodeName(nodeId) {
     const node = nodes.value.find(n => n.id === nodeId);
     return node ? node.name : `Node ${nodeId}`;
-}
-
-function generateColors(count) {
-    const colors = [];
-    for (let i = 0; i < count; i++) {
-        const hue = (i * 360 / count) % 360;
-        const saturation = 70 + (i % 3) * 10;
-        const lightness = 50 + (i % 2) * 10;
-        colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
-    }
-    return colors;
-}
-
-function getContrastColor(hslColor) {
-    return `rgb(0, 0, 0)`;
 }
 </script>
 
@@ -255,12 +224,15 @@ function getContrastColor(hslColor) {
         </div>
 
         <div id="left" class="w-2/3 p-4 relative">
-            <div id="cy" class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700"></div>
+            <div id="cy"
+                class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700">
+            </div>
             <CausalLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
-            <div class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
+            <div
+                class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
                         <button @click="selectedType = 'node'; selectedElement = null"
@@ -279,8 +251,10 @@ function getContrastColor(hslColor) {
                     class="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-500">
                     <h3 class="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-300">Selected Node</h3>
                     <div class="space-y-2">
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name }}
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}
+                        </p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name
+                            }}
                         </p>
                         <p v-if="selectedElement.scc_id !== undefined" class="text-slate-900 dark:text-neutral-100">
                             <strong>SCC ID:</strong> {{ selectedElement.scc_id }}
@@ -292,7 +266,8 @@ function getContrastColor(hslColor) {
                     class="mb-6 p-4 bg-green-50 dark:bg-green-950/50 rounded-lg border border-green-500">
                     <h3 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-300">Selected Edge</h3>
                     <div class="space-y-3">
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}
+                        </p>
                         <p class="text-slate-900 dark:text-neutral-100"><strong>From:</strong> {{
                             getNodeName(selectedElement.source) }}</p>
                         <p class="text-slate-900 dark:text-neutral-100"><strong>To:</strong> {{
