@@ -129,29 +129,35 @@ onMounted(() => {
             console.log(isLoading.value);
         })
         .catch(error => {
-            if (error instanceof AxiosError) {
-                if (error.response && error.response.status === 405) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'No Causal Graph Available',
-                        text: 'Please upload PDDL files first to generate a Causal Graph.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Upload Files',
-                        confirmButtonColor: '#3B82F6',
-                        cancelButtonText: 'Stay Here',
-                        cancelButtonColor: '#6B7280',
-                        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            router.push('/upload');
-                        }
-                    });
-                    isLoading.value = false;
-                    return;
-                }
+            if (error.response && error.response.status === 405) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Causal Graph Available',
+                    text: 'Please upload PDDL files first to generate a Causal Graph.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Upload Files',
+                    confirmButtonColor: '#3B82F6',
+                    cancelButtonText: 'Stay Here',
+                    cancelButtonColor: '#6B7280',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        router.push('/upload');
+                    }
+                });
+                isLoading.value = false;
+                return;
+            } else if (error.response) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error Fetching Causal Graph',
+                    text: error.response.data.message || 'An unexpected error occurred.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3B82F6',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+                });
             }
             console.error('Error fetching elements:', error);
-            error.value = 'Failed to load Causal Graph. Please try again later.';
             isLoading.value = false;
         });
 
@@ -255,12 +261,15 @@ function getContrastColor(hslColor) {
         </div>
 
         <div id="left" class="w-2/3 p-4 relative">
-            <div id="cy" class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700"></div>
+            <div id="cy"
+                class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700">
+            </div>
             <CausalLegend />
         </div>
 
         <div id="right" class="w-1/3 p-4">
-            <div class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
+            <div
+                class="bg-white dark:bg-neutral-800 h-full overflow-y-auto rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 p-4">
                 <div class="mb-4">
                     <div class="flex space-x-2 mb-4">
                         <button @click="selectedType = 'node'; selectedElement = null"
@@ -279,8 +288,10 @@ function getContrastColor(hslColor) {
                     class="mb-6 p-4 bg-blue-50 dark:bg-blue-950/50 rounded-lg border border-blue-500">
                     <h3 class="text-lg font-semibold mb-2 text-blue-800 dark:text-blue-300">Selected Node</h3>
                     <div class="space-y-2">
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name }}
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}
+                        </p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>Name:</strong> {{ selectedElement.name
+                            }}
                         </p>
                         <p v-if="selectedElement.scc_id !== undefined" class="text-slate-900 dark:text-neutral-100">
                             <strong>SCC ID:</strong> {{ selectedElement.scc_id }}
@@ -292,7 +303,8 @@ function getContrastColor(hslColor) {
                     class="mb-6 p-4 bg-green-50 dark:bg-green-950/50 rounded-lg border border-green-500">
                     <h3 class="text-lg font-semibold mb-2 text-green-800 dark:text-green-300">Selected Edge</h3>
                     <div class="space-y-3">
-                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}</p>
+                        <p class="text-slate-900 dark:text-neutral-100"><strong>ID:</strong> {{ selectedElement.id }}
+                        </p>
                         <p class="text-slate-900 dark:text-neutral-100"><strong>From:</strong> {{
                             getNodeName(selectedElement.source) }}</p>
                         <p class="text-slate-900 dark:text-neutral-100"><strong>To:</strong> {{
