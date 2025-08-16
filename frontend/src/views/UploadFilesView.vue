@@ -1,0 +1,149 @@
+<script setup>
+import axios from 'axios';
+import { onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import Swal from 'sweetalert2';
+import { isDarkMode } from '@/utils/darkMode';
+
+const router = useRouter();
+
+const fileInput = ref([]);
+
+onMounted(() => {
+    Swal.close();
+});
+
+function handleFileInput(event) {
+    if (!event.target.files || event.target.files.length === 0) {
+        return;
+    }
+    for (let i = 0; i < event.target.files.length; i++) {
+        const file = event.target.files[i];
+        if (!file.name.endsWith('.pddl')) {
+            message('Please select a valid PDDL file', 'error');
+            return;
+        }
+        fileInput.value.push(file);
+    }
+}
+
+function message(message, icon) {
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "bottom-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        theme: isDarkMode() ? 'dark' : 'light',
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    });
+    Toast.fire({
+        icon: icon,
+        title: message
+    });
+}
+
+function handleSubmit() {
+    if (!fileInput.value || fileInput.value.length === 0) {
+        message('Please select at least one file to upload', 'error');
+        return;
+    } else if (fileInput.value.length > 2) {
+        message('You can only upload 2 files', 'error');
+        return;
+    }
+    let startTime;
+    let timerInterval;
+
+    Swal.fire({
+        title: 'Uploading Files...',
+        html: `
+        <div class="flex flex-col items-center">
+            <p>Processing PDDL files and running Fast Downward</p>
+            <p class="text-sm text-gray-500 mt-2">This may take a few moments</p>
+            <p id="swal-timer" class="text-xs text-blue-600 mt-2">Elapsed time: 0.000s</p>
+        </div>
+    `,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        theme: isDarkMode() ? 'dark' : 'light',
+        didOpen: () => {
+            Swal.showLoading();
+            const timerEl = Swal.getHtmlContainer().querySelector('#swal-timer');
+            startTime = performance.now();
+
+            timerInterval = setInterval(() => {
+                const elapsed = performance.now() - startTime;
+                if (timerEl) {
+                    timerEl.textContent = `Elapsed time: ${(elapsed / 1000).toFixed(2)}s`;
+                }
+            }, 50);
+        },
+        willClose: () => {
+            clearInterval(timerInterval);
+        }
+    });
+
+
+
+    const formData = new FormData();
+    fileInput.value.forEach(file => {
+        formData.append('files', file);
+    });
+
+    axios.post('/api/upload', formData)
+        .then(response => {
+            console.log('Upload successful:', response.data);
+            const endTime = performance.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            message('Files processed successfully! (' + duration + 's)', 'success');
+            router.push('/causal');
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            message('Error uploading files: ' + (error.response?.data?.detail || error.message), 'error');
+        });
+}
+
+function removeFile(index) {
+    fileInput.value.splice(index, 1);
+}
+
+</script>
+
+
+<template>
+    <div
+        class="fixed top-16 left-0 w-full h-[calc(100vh-4rem)] p-6 bg-slate-50 dark:bg-neutral-900 shadow-inner overflow-auto flex flex-col items-center">
+        <div class="w-full max-w-2xl mx-auto p-6 bg-white dark:bg-neutral-800 text-slate-900 dark:text-neutral-100 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700 mb-8">
+            <h2 class="text-lg font-semibold mb-4">Uploaded Files</h2>
+            <ul class="divide-y divide-slate-200 dark:divide-neutral-700">
+                <li v-for="(file, index) in fileInput" :key="index" class="flex justify-between items-center py-2">
+                    <span>{{ file.name }}</span>
+                    <i @click="removeFile(index)" class="pi pi-times cursor-pointer hover:text-red-400 transition-colors"></i>
+                </li>
+            </ul>
+        </div>
+
+        <form @submit.prevent="handleSubmit" class="w-full max-w-2xl mx-auto flex flex-col space-y-6">
+            <label for="domainInput" class="w-full h-64 flex flex-col items-center justify-center p-6
+               border-2 border-dashed border-slate-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800
+               hover:border-blue-400 dark:hover:border-blue-400 transition-colors">
+                <i class="pi pi-upload text-5xl text-slate-400 dark:text-neutral-400 mb-4"></i>
+                <input id="domainInput" name="domain" type="file" accept=".pddl" multiple class="sr-only"
+                    @change="handleFileInput($event)" />
+            </label>
+
+            <button type="submit"
+                class="w-full px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg shadow transition-colors">
+                Submit
+            </button>
+        </form>
+    </div>
+</template>
+
+
+<style scoped></style>

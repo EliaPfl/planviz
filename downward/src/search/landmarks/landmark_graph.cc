@@ -7,8 +7,12 @@
 #include <set>
 #include <sstream>
 #include <vector>
+#include <fstream>
+#include "../utils/json.hpp"
+
 
 using namespace std;
+using json = nlohmann::json;
 
 namespace landmarks {
 LandmarkGraph::LandmarkGraph()
@@ -162,4 +166,67 @@ void LandmarkGraph::set_landmark_ids() {
         ++id;
     }
 }
+
+void LandmarkGraph::export_graph(const fs::path &output_path, const VariablesProxy &vars) {
+    json jnodes = json::array();
+    json jedges = json::array();
+
+    for (const auto &node : nodes) {
+        string landmark_name;
+        const Landmark &landmark = node->get_landmark();
+        bool first = true;
+        
+        // create name
+        for (const FactPair &fact : landmark.facts) {
+            if (!first) {
+                if (landmark.disjunctive) {
+                    landmark_name += " | ";
+                } else if (landmark.conjunctive) {
+                    landmark_name += " & ";
+                }
+            }
+            first = false;
+            VariableProxy var = vars[fact.var];
+            landmark_name += var.get_fact(fact.value).get_name();
+        }
+
+        // Node
+        json jnode;
+        jnode["data"] = {
+                {"id", std::to_string(node->get_id())},
+                {"name", landmark_name}
+            };
+        jnodes.push_back(jnode);
+
+        // Edges
+        for (const auto &[child, edge_type] : node->children) {
+            json jedge;
+            jedge["data"] = {
+                    {"id", std::to_string(node->get_id()) + "_" + std::to_string(child->get_id())},
+                    {"source", std::to_string(node->get_id())},
+                    {"target", std::to_string(child->get_id())},
+                    {"type", static_cast<int>(edge_type)}
+                };
+            jedges.push_back(jedge);
+        }
+    }
+
+    // export full json
+    json graph_json;
+    graph_json["elements"] = {
+        {"nodes", jnodes},
+        {"edges", jedges}
+    };
+    graph_json["metadata"] = {
+        {"num_landmarks", nodes.size()},
+        {"num_conjunctive_landmarks", num_conjunctive_landmarks},
+        {"num_disjunctive_landmarks", num_disjunctive_landmarks}
+    };
+
+
+    std::ofstream out(output_path / ("landmark_graph.json"));
+    out << graph_json.dump(2);
+    out.close();
+}
+
 }

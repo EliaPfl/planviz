@@ -4,6 +4,8 @@
 
 #include "../utils/logging.h"
 #include "../utils/timer.h"
+#include "../utils/json.hpp"
+#include "../algorithms/sccs.h"
 
 #include <algorithm>
 #include <cassert>
@@ -11,7 +13,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include <fstream>
+#include <filesystem>
+
+
 using namespace std;
+using json = nlohmann::json;
 
 /*
   We only want to create one causal graph per task, so they are cached globally.
@@ -210,4 +217,123 @@ const CausalGraph &get_causal_graph(const AbstractTask *task) {
     }
     return *causal_graph_cache[task];
 }
+
+void CausalGraph::export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+    const OperatorsProxy &ops, const VariablesProxy &vars, const fs::path &output_path) const
+    {   
+        json nodes = json::array();
+        json edges = json::array();
+
+        // collect operator names for edges
+        // mostly the same as in handle_operator but separated to keep modification of the original code minimal
+        std::map<std::pair<int, int>, json> edge_labels;
+        
+        for (const OperatorProxy &op : ops) {
+            const std::string &op_name = op.get_name();
+            const EffectsProxy &effects = op.get_effects();
+
+            auto add_label = [&](int u, int v) {
+                if (u != v) {
+                    size_t pos = op_name.find(" ");
+                    if (pos != std::string::npos) {
+                        edge_labels[{u, v}][op_name.substr(0, pos)] += op_name.substr(pos + 1);
+                    } else {
+                        edge_labels[{u, v}] += op_name;
+                    }
+                }
+            };
+
+            // 1. pre->eff edges: from operator preconditions to effects
+            for (const FactProxy &pre : op.get_preconditions()) {
+                int pre_var_id = pre.get_variable().get_id();
+                for (const EffectProxy &eff : effects) {
+                    add_label(pre_var_id, eff.get_fact().get_variable().get_id());
+                }
+            }
+
+            // 2. pre->eff edges: from effect conditions to effects
+            for (const EffectProxy &eff : effects) {
+                int eff_var_id = eff.get_fact().get_variable().get_id();
+                for (const FactProxy &cond : eff.get_conditions()) {
+                    add_label(cond.get_variable().get_id(), eff_var_id);
+                }
+            }
+
+            // 3. eff->eff edges
+            for (size_t i = 0; i < effects.size(); ++i) {
+                for (size_t j = i + 1; j < effects.size(); ++j) {
+                    int eff1_var_id = effects[i].get_fact().get_variable().get_id();
+                    int eff2_var_id = effects[j].get_fact().get_variable().get_id();
+                    if (eff1_var_id != eff2_var_id) {
+                        add_label(eff1_var_id, eff2_var_id);
+                        add_label(eff2_var_id, eff1_var_id);
+                    }
+                }
+            }
+        }
+
+        // scc
+        auto sccs = sccs::compute_maximal_sccs(successors);
+        std::vector<int> scc_ids(successors.size(), -1); //maps Node ID to SCC ID
+        for(unsigned long i = 0; i < sccs.size(); ++i) {
+            for (int node : sccs[i]) {
+                scc_ids[node] = i;
+            }
+        }
+
+
+        // Nodes
+        for (unsigned long i = 0; i < successors.size(); ++i) {
+            json node;
+            node["data"] = {
+                {"id", std::to_string(i)},
+                {"name", vars[i].get_fact(0).get_name()},
+                {"scc_id", scc_ids[i]},
+                {"pre_to_eff", pre_to_eff[i]},
+                {"eff_to_eff", eff_to_eff[i]} 
+            };
+            // Domain data
+            for (int j = 0; j < vars[i].get_domain_size(); ++j) {
+                node["data"]["domain"][j] = vars[i].get_fact(j).get_name();
+            }
+            // Start and goal values
+            node["data"]["start"] = initial_state[i].get_value();
+            if(goal_map.count(i)) {
+                node["data"]["goal"] = goal_map.at(i);
+            }
+
+            nodes.push_back(node);
+        }
+
+        // Edges
+        for (unsigned long i = 0; i < successors.size(); ++i) {
+            for (int j : successors[i]) {
+                json edge;
+                
+                edge["data"] = {
+                    {"id", std::to_string(i) + "_" + std::to_string(j)},
+                    {"source", std::to_string(i)},
+                    {"target", std::to_string(j)},
+                    {"label", edge_labels[{i, j}]}
+                };
+                
+                edges.push_back(edge);
+            }
+        }
+
+        // full JSON
+        json graph_json;
+        graph_json["elements"] = {
+            {"nodes", nodes},
+            {"edges", edges}
+        };
+        graph_json["metadata"] = {
+            {"num_variables", successors.size()},
+            {"num_sccs", sccs.size()}
+        };
+
+        std::ofstream out(output_path / "causal_graph.json");
+        out << graph_json.dump(2);
+        out.close();
+    }
 }
