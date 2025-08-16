@@ -1,5 +1,5 @@
 /**
- * Generates a array of HSL colors distributed evenly around the color wheel
+ * Generates an array of HSL colors distributed evenly around the color wheel
  * @param {number} count - Number of colors to generate
  * @param {number} startHue - Starting hue (default: 0 for red)
  * @returns {string[]} Array of HSL color strings
