@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router';
 import axios, { AxiosError } from 'axios';
 import Swal from 'sweetalert2';
 import CausalLegend from '../components/legends/CausalLegend.vue';
+import { scrollSidebarToTop } from '../utils/sidebar.js';
+import { generateColors, getContrastColor } from '../utils/colors.js';
+import { isDarkMode } from '@/utils/darkMode';
 
 
 const router = useRouter();
@@ -112,6 +115,7 @@ onMounted(() => {
             nodes.value = cy.value.nodes().map(node => node.data());
             edges.value = cy.value.edges().map(edge => edge.data());
 
+            // Event listeners for node and edge clicks
             cy.value.on('tap', 'node', handleNodeClick);
             cy.value.on('tap', 'edge', handleEdgeClick);
             cy.value.on('tap', function (evt) {
@@ -125,6 +129,7 @@ onMounted(() => {
 
                 router.push({ name: 'DomainTransitionGraph', params: { ID: nodeId } });
             });
+
             isLoading.value = false;
             console.log(isLoading.value);
         })
@@ -173,14 +178,7 @@ function handleNodeClick(event) {
     node.addClass('highlighted');
     node.connectedEdges().addClass('highlighted');
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function handleEdgeClick(event) {
@@ -192,14 +190,7 @@ function handleEdgeClick(event) {
     cy.value.elements().removeClass('highlighted');
     edge.addClass('highlighted');
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function handleListClick(element, type = 'node') {
@@ -219,34 +210,12 @@ function handleListClick(element, type = 'node') {
         }
     }
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function getNodeName(nodeId) {
     const node = nodes.value.find(n => n.id === nodeId);
     return node ? node.name : `Node ${nodeId}`;
-}
-
-function generateColors(count) {
-    const colors = [];
-    for (let i = 0; i < count; i++) {
-        const hue = (i * 360 / count) % 360;
-        const saturation = 70 + (i % 3) * 10;
-        const lightness = 50 + (i % 2) * 10;
-        colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
-    }
-    return colors;
-}
-
-function getContrastColor(hslColor) {
-    return `rgb(0, 0, 0)`;
 }
 </script>
 

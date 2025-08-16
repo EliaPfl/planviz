@@ -5,6 +5,8 @@ import { useRouter } from 'vue-router';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import LandmarkLegend from '../components/legends/LandmarkLegend.vue';
+import { scrollSidebarToTop } from '../utils/sidebar.js';
+import { isDarkMode } from '@/utils/darkMode';
 
 const router = useRouter();
 const nodes = ref([]);
@@ -96,7 +98,7 @@ onMounted(() => {
                     confirmButtonColor: '#3B82F6',
                     cancelButtonText: 'Stay Here',
                     cancelButtonColor: '#6B7280',
-                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+                    theme: isDarkMode() ? 'dark' : 'light'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         router.push('/upload');
@@ -126,28 +128,14 @@ function handleNodeClick(event) {
     selectedElement.value = nodeData;
     selectedType.value = 'node';
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 function handleNodeListClick(node) {
     selectedElement.value = node;
     selectedType.value = 'node';
 
-    // Scroll to top of the sidebar to show details
-    const rightSidebar = document.getElementById('right');
-    if (rightSidebar) {
-        const scrollContainer = rightSidebar.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
+    scrollSidebarToTop();
 }
 
 </script>
@@ -191,8 +179,8 @@ function handleNodeListClick(node) {
                             }}</p>
                         <p v-if="selectedElement.beschreibung" class="text-slate-900 dark:text-neutral-100">
                             <strong>Description:</strong> {{
-                                selectedElement.beschreibung }}
-                        </p>
+                                selectedElement.beschreibung }}</p>
+
                     </div>
                 </div>
 
