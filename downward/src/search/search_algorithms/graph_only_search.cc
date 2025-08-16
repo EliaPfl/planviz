@@ -34,23 +34,27 @@ void GraphOnlySearch::initialize() {
 
     log << "Starting GraphOnlySearch for structure analysis. Export path: " << output_path << endl;
 
+    // make sure the output directory exists
+    if (!fs::exists(output_path)) {
+        fs::create_directories(output_path);
+        log << "Created output directory: " << output_path << endl;
+    }
+
     State initial_state = state_registry.get_initial_state();
     GoalsProxy goals = task_proxy.get_goals();
     OperatorsProxy ops = task_proxy.get_operators();
     VariablesProxy vars = task_proxy.get_variables();
 
     std::unordered_map<int, int> goal_map;
-        for (FactProxy g : goals) {
-            goal_map[g.get_variable().get_id()] = g.get_value();
-        }
+    for (FactProxy g : goals) {
+        goal_map[g.get_variable().get_id()] = g.get_value();
+    }
 
-    current_eval_context = EvaluationContext(initial_state, &statistics);
-
-    /// get causal graph
-    task_proxy.get_causal_graph().export_successors(initial_state, goal_map, ops, vars, output_path);
+    // causal graph
+    task_proxy.get_causal_graph().export_graph(initial_state, goal_map, ops, vars, output_path);
     log << "Causal graph exported." << endl;
 
-    // get domain transition graphs
+    // domain transition graphs
     function<bool(int, int)> pruning_condition =
         [](int, int) {return false;};
     DTGFactory factory(task_proxy, false, pruning_condition);
@@ -61,10 +65,9 @@ void GraphOnlySearch::initialize() {
     for(const auto &dtg : transition_graphs) {
         dtg->export_graph(initial_state, goal_map, ops, vars, output_path);
     }
-    const State &init_state = task_proxy.get_initial_state();
     log << "Domain transition graphs exported." << endl;
 
-    // Landmarks
+    // landmark graph
     auto base_lm_factory = std::make_shared<LandmarkFactoryRpgSasp>(
         true,
         true,
@@ -79,14 +82,13 @@ void GraphOnlySearch::initialize() {
     auto landmark_graph = lm_factory.compute_lm_graph(task);
     log << "Landmark graph computed with " << landmark_graph->get_num_landmarks() << " landmarks." << endl;
 
-    // Export the landmark graph
     landmark_graph->export_graph(output_path, vars);
     log << "Landmark graph exported." << endl;
 }
 
 
 SearchStatus GraphOnlySearch::step() {
-    log << "GraphOnlySearch completed graph analysis. Terminating." << endl;
+    log << "GraphOnlySearch completed. Terminating." << endl;
     utils::exit_with(utils::ExitCode::SUCCESS);
     return FAILED; // Will never be reached
 }
@@ -103,7 +105,7 @@ class GraphOnlySearchFeature
 public:
     GraphOnlySearchFeature() : TypedFeature("graph_only") {
         document_title("Graph Only Analysis");
-        document_synopsis("Exports causal and domain transition graphs, then exits.");
+        document_synopsis("Exports causal, domain transition and landmark graphs, then exits.");
 
         add_option<std::string>("output", "Path to write analysis summary file (optional)");
         add_search_algorithm_options_to_feature(*this, "graph_only");

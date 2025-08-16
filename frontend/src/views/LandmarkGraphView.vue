@@ -10,11 +10,9 @@ import { isDarkMode } from '@/utils/darkMode';
 
 const router = useRouter();
 const nodes = ref([]);
-const edges = ref([]);
 const selectedElement = ref(null);
 const selectedType = ref('node');
 const isLoading = ref(true);
-const error = ref(null);
 
 onMounted(() => {
     isLoading.value = true;
@@ -85,11 +83,9 @@ onMounted(() => {
             });
 
             nodes.value = cy.nodes().map(node => node.data());
-            edges.value = cy.edges().map(edge => edge.data());
             cy.on('tap', 'node', handleNodeClick);
 
             isLoading.value = false;
-            console.log(isLoading.value);
         })
         .catch(error => {
             if (error.response && error.response.status === 405) {
@@ -110,9 +106,17 @@ onMounted(() => {
                 });
                 isLoading.value = false;
                 return;
+            } else if (error.response) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error Fetching Landmark Graph',
+                    text: error.response.data.message || 'An unexpected error occurred.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3B82F6',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+                });
             }
             console.error('Error fetching elements:', error);
-            error.value = 'Failed to load Causal Graph. Please try again later.';
             isLoading.value = false;
         });
 
@@ -146,18 +150,6 @@ function handleNodeListClick(node) {
             </div>
         </div>
 
-        <div v-else-if="error" class="flex items-center justify-center w-full">
-            <div class="text-center p-8">
-                <div class="text-red-500 text-6xl mb-4">⚠️</div>
-                <h2 class="text-xl font-semibold text-slate-800 dark:text-neutral-200 mb-2">Error Loading Graph</h2>
-                <p class="text-slate-600 dark:text-neutral-400 mb-4">{{ error }}</p>
-                <button @click="window.location.reload()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
-                    Retry
-                </button>
-            </div>
-        </div>
-
         <div id="left" class="w-2/3 p-4 relative">
             <div id="cy"
                 class="w-full h-full bg-white dark:bg-neutral-800 rounded-lg shadow-sm border border-slate-200 dark:border-neutral-700">
@@ -188,6 +180,7 @@ function handleNodeListClick(node) {
                         <p v-if="selectedElement.beschreibung" class="text-slate-900 dark:text-neutral-100">
                             <strong>Description:</strong> {{
                                 selectedElement.beschreibung }}</p>
+
                     </div>
                 </div>
 

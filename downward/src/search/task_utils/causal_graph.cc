@@ -218,13 +218,14 @@ const CausalGraph &get_causal_graph(const AbstractTask *task) {
     return *causal_graph_cache[task];
 }
 
-void CausalGraph::export_successors(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+void CausalGraph::export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
     const OperatorsProxy &ops, const VariablesProxy &vars, const fs::path &output_path) const
     {   
         json nodes = json::array();
         json edges = json::array();
 
         // collect operator names for edges
+        // mostly the same as in handle_operator but separated to keep modification of the original code minimal
         std::map<std::pair<int, int>, json> edge_labels;
         
         for (const OperatorProxy &op : ops) {

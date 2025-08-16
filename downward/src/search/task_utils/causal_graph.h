@@ -118,7 +118,7 @@ public:
         return predecessors[var];
     }
 
-    void export_successors(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+    void export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
       const OperatorsProxy &ops, const VariablesProxy &varsy, const fs::path &output_path) const;
 };
 

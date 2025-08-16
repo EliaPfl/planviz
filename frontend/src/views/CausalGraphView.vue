@@ -134,29 +134,35 @@ onMounted(() => {
             console.log(isLoading.value);
         })
         .catch(error => {
-            if (error instanceof AxiosError) {
-                if (error.response && error.response.status === 405) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'No Causal Graph Available',
-                        text: 'Please upload PDDL files first to generate a Causal Graph.',
-                        showCancelButton: true,
-                        confirmButtonText: 'Upload Files',
-                        confirmButtonColor: '#3B82F6',
-                        cancelButtonText: 'Stay Here',
-                        cancelButtonColor: '#6B7280',
-                        theme: isDarkMode() ? 'dark' : 'light',
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            router.push('/upload');
-                        }
-                    });
-                    isLoading.value = false;
-                    return;
-                }
+            if (error.response && error.response.status === 405) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No Causal Graph Available',
+                    text: 'Please upload PDDL files first to generate a Causal Graph.',
+                    showCancelButton: true,
+                    confirmButtonText: 'Upload Files',
+                    confirmButtonColor: '#3B82F6',
+                    cancelButtonText: 'Stay Here',
+                    cancelButtonColor: '#6B7280',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        router.push('/upload');
+                    }
+                });
+                isLoading.value = false;
+                return;
+            } else if (error.response) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error Fetching Causal Graph',
+                    text: error.response.data.message || 'An unexpected error occurred.',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#3B82F6',
+                    theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light'
+                });
             }
             console.error('Error fetching elements:', error);
-            error.value = 'Failed to load Causal Graph. Please try again later.';
             isLoading.value = false;
         });
 
