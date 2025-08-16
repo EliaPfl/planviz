@@ -1,0 +1,20 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    mem_limit: 4g
+    memswap_limit: 6g
+    cpus: '2.0'
+    shm_size: '2gb'
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80" # localhost:8080 -> container:80
+    depends_on:
+      - backend
+    mem_limit: 2g
+    memswap_limit: 3g

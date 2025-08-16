@@ -6,7 +6,12 @@
 #include <cassert>
 #include <iostream>
 
+#include "../utils/json.hpp"
+#include <fstream>
+#include "../algorithms/sccs.h"
+
 using namespace std;
+using json = nlohmann::json;
 
 namespace domain_transition_graph {
 DTGFactory::DTGFactory(const TaskProxy &task_proxy,
@@ -297,4 +302,82 @@ DomainTransitionGraph::DomainTransitionGraph(int var_index, int node_count) {
         nodes.push_back(ValueNode(this, value));
     last_helpful_transition_extraction_time = -1;
 }
+
+void DomainTransitionGraph::export_graph(const State &initial_state, const std::unordered_map<int, int> &goal_map, 
+    const OperatorsProxy &ops, const VariablesProxy &vars, const fs::path &output_path) const {
+    json jnodes = json::array();
+    json jedges = json::array();
+
+    // scc
+    std::vector<std::vector<int>> successors(nodes.size());
+    for(const ValueNode &node : this->nodes) {
+        for(const ValueTransition &vT : node.transitions) {
+            successors[node.value].push_back(vT.target->value);
+        }
+    }
+    auto sccs = sccs::compute_maximal_sccs(successors);
+    std::vector<int> scc_ids(successors.size(), -1); //maps Node ID to SCC ID
+    for(unsigned long i = 0; i < sccs.size(); ++i) {
+        for (int node : sccs[i]) {
+            scc_ids[node] = i;
+        }
+    }
+    
+    for(const ValueNode &node : this->nodes) {
+        // Node
+        json jnode;
+        jnode["data"] = {
+                {"id", std::to_string(node.value)},
+                {"name", vars[var].get_fact(node.value).get_name()},
+                {"scc_id", scc_ids[node.value]}
+            };
+        if(node.value == initial_state[var].get_value()) {
+            jnode["classes"] += "init";
+        }
+        // Mark goal nodes
+        if(goal_map.count(var) && goal_map.at(var) == node.value) {
+            jnode["classes"] += "goal";
+        }
+        
+        jnodes.push_back(jnode);
+        
+        // Edges
+        for(const ValueTransition &vT : node.transitions) {
+            json jedge;
+            jedge["data"] = {
+                    {"id", std::to_string(node.value) + "_" + std::to_string(vT.target->value)},
+                    {"source", std::to_string(node.value)},
+                    {"target", std::to_string(vT.target->value)}
+                };
+            // edge label
+            for(const ValueTransitionLabel &label : vT.labels) {
+                std::string operation_name = ops[label.op_id].get_name();
+                size_t pos = operation_name.find(" ");
+                if (pos != std::string::npos) {
+                    jedge["data"]["label"][operation_name.substr(0, pos)] += operation_name.substr(pos + 1);
+                } else {
+                    jedge["data"]["label"] += operation_name;
+                }
+            }
+            jedges.push_back(jedge);
+        }
+    }
+    
+    // export full JSON
+    json graph_json;
+    graph_json["elements"] = {
+        {"nodes", jnodes},
+        {"edges", jedges}
+    };
+    graph_json["metadata"] = {
+        {"num_variables", nodes.size()},
+        {"num_sccs", sccs.size()}
+    };
+
+    std::ofstream out(output_path / ("dtg_" + std::to_string(var) + ".json"));
+    out << graph_json.dump(2);
+    out.close();
+
+}
+
 }
