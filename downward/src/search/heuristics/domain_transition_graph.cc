@@ -324,7 +324,7 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const std::
     }
     
     for(const ValueNode &node : this->nodes) {
-        // Nodes
+        // Node
         json jnode;
         jnode["data"] = {
                 {"id", std::to_string(node.value)},
@@ -349,6 +349,7 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const std::
                     {"source", std::to_string(node.value)},
                     {"target", std::to_string(vT.target->value)}
                 };
+            // edge label
             for(const ValueTransitionLabel &label : vT.labels) {
                 std::string operation_name = ops[label.op_id].get_name();
                 size_t pos = operation_name.find(" ");
@@ -362,7 +363,6 @@ void DomainTransitionGraph::export_graph(const State &initial_state, const std::
         }
     }
     
-
     // export full JSON
     json graph_json;
     graph_json["elements"] = {

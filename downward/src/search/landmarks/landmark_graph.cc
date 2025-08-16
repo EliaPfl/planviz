@@ -171,13 +171,12 @@ void LandmarkGraph::export_graph(const fs::path &output_path, const VariablesPro
     json jnodes = json::array();
     json jedges = json::array();
 
-    std::vector<std::vector<int>> successors(nodes.size());
-
     for (const auto &node : nodes) {
         string landmark_name;
         const Landmark &landmark = node->get_landmark();
         bool first = true;
         
+        // create name
         for (const FactPair &fact : landmark.facts) {
             if (!first) {
                 if (landmark.disjunctive) {
@@ -191,6 +190,7 @@ void LandmarkGraph::export_graph(const fs::path &output_path, const VariablesPro
             landmark_name += var.get_fact(fact.value).get_name();
         }
 
+        // Node
         json jnode;
         jnode["data"] = {
                 {"id", std::to_string(node->get_id())},
@@ -198,6 +198,7 @@ void LandmarkGraph::export_graph(const fs::path &output_path, const VariablesPro
             };
         jnodes.push_back(jnode);
 
+        // Edges
         for (const auto &[child, edge_type] : node->children) {
             json jedge;
             jedge["data"] = {
@@ -207,11 +208,10 @@ void LandmarkGraph::export_graph(const fs::path &output_path, const VariablesPro
                     {"type", static_cast<int>(edge_type)}
                 };
             jedges.push_back(jedge);
-            successors[node->get_id()].push_back(child->get_id());
         }
     }
 
-
+    // export full json
     json graph_json;
     graph_json["elements"] = {
         {"nodes", jnodes},
