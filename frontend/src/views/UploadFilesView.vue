@@ -3,6 +3,7 @@ import axios from 'axios';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
+import { isDarkMode } from '@/utils/darkMode';
 
 const router = useRouter();
 
@@ -33,7 +34,7 @@ function message(message, icon) {
         showConfirmButton: false,
         timer: 3000,
         timerProgressBar: true,
-        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
+        theme: isDarkMode() ? 'dark' : 'light',
         didOpen: (toast) => {
             toast.onmouseenter = Swal.stopTimer;
             toast.onmouseleave = Swal.resumeTimer;
@@ -68,7 +69,7 @@ function handleSubmit() {
         allowOutsideClick: false,
         allowEscapeKey: false,
         showConfirmButton: false,
-        theme: (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light',
+        theme: isDarkMode() ? 'dark' : 'light',
         didOpen: () => {
             Swal.showLoading();
             const timerEl = Swal.getHtmlContainer().querySelector('#swal-timer');
