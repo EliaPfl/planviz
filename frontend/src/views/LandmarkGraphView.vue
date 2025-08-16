@@ -131,7 +131,7 @@ function handleNodeListClick(node) {
     selectedElement.value = node;
     selectedType.value = 'node';
 
-    scrollSidebarToTop
+    scrollSidebarToTop();
 }
 
 </script>
