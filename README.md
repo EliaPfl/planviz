@@ -112,20 +112,20 @@ See the [File Structure](#file-structure) section below for details on modified 
 ```
 planviz/
 ├── backend/                    # FastAPI backend
-│   ├── main.py                # Main API endpoints and PDDL processing
-│   ├── requirements.txt       # Python dependencies
-│   ├── Dockerfile            # Backend container configuration
-│   └── out_graphs/           # Generated graph JSON files
-├── frontend/                  # Vue.js frontend
-│   ├── src/                  # Vue components and application logic
-│   │   ├── components/       # Reusable UI components
-│   │   ├── views/           # Page components
-│   │   └── utils/           # Helper functions
-│   ├── Dockerfile           # Frontend container configuration
-│   ├── nginx.conf           # Nginx reverse proxy configuration
-│   └── package.json         # Node.js dependencies
-├── downward/                  # Modified Fast Downward planner
-│   └── src/search/           # Core search components (modified)
+│   ├── main.py                 # Main API endpoints and PDDL processing
+│   ├── requirements.txt        # Python dependencies
+│   ├── Dockerfile              # Backend container configuration
+│   └── out_graphs/             # Generated graph JSON files
+├── frontend/                   # Vue.js frontend
+│   ├── src/                    # Vue components and application logic
+│   │   ├── components/         # Reusable UI components
+│   │   ├── views/              # Page components
+│   │   └── utils/              # Helper functions
+│   ├── Dockerfile              # Frontend container configuration
+│   ├── nginx.conf              # Nginx reverse proxy configuration
+│   └── package.json            # Node.js dependencies
+├── downward/                   # Modified Fast Downward planner
+│   └── src/search/             # Core search components (modified)
 │       ├── heuristics/
 │       │   ├── domain_transition_graph.h/.cc  # DTG with JSON export
 │       ├── landmarks/
@@ -136,9 +136,9 @@ planviz/
 │       │   ├── causal_graph.h/.cc             # Causal graph with JSON export
 │       └── utils/
 │           └── json.hpp                       # nlohmann JSON library
-├── docker-compose.yml         # Multi-container orchestration
-├── build.sh                  # Development build script
-└── run.sh                    # Development run script
+├── docker-compose.yml          # Multi-container orchestration
+├── build.sh                    # Development build script
+└── run.sh                      # Development run script
 ```
 
 ## Contributors
