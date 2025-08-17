@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="assets/logo.svg" alt="PlanViz Logo" width="400px"/>
+</div>
+
 # PlanViz
 
 A web-based visualization tool for PDDL (Planning Domain Definition Language) files, built with Vue.js frontend and FastAPI backend using Fast Downward planner.
@@ -50,7 +54,7 @@ docker-compose up --build
    - Web interface: http://localhost:8080
    - Backend API accessible through nginx proxy only
 
-### Local Development
+### Local Development (Unix)
 
 1. Make scripts executable and build:
 ```bash
@@ -96,37 +100,45 @@ chmod +x build.sh run.sh
 
 
 ### Fast Downward Modifications
-This project includes custom modifications to Fast Downward. The following files have been modified, as shown in the file structure below:
-- **Graph-only search**: Generates graphs without solving
-- **JSON output**: Exports graph data for web visualization
-- **Extended graph types**: Additional landmark and transition graphs
+This project extends Fast Downward with custom graph extraction capabilities for web visualization:
+
+- **Graph-only search**: Custom algorithm that generates planning graphs without solving
+- **JSON export**: All graph classes enhanced with JSON serialization using [nlohmann/json](https://github.com/nlohmann/json)
+
+See the [File Structure](#file-structure) section below for details on modified components.
 
 ### File Structure
 
-
 ```
 planviz/
-├── backend/          # FastAPI backend
-│   ├── main.py       # API endpoints
-│   ├── Dockerfile    # Backend container
-│   └── requirements.txt
-├── frontend/          # Vue.js frontend
-│   ├── src/          # Vue components and views
-│   ├── Dockerfile    # Frontend container
-│   └── nginx.conf    # Nginx proxy config
-├── downward/src/search/ # Modified Fast Downward planner
-│   ├── heuristics/
-│   │   └── domain_transition_graph.cc
-│   ├── landmarks/
-│   │   └── landmark_graph.cc
-│   ├── search_algorithms/
-│   │   └── graph_only_search.cc # Custom search for graph generation
-│   └── task_utils/
-│   │   ├── causal_graph.cc # Causal graph implementation
-│   │   └── causal_graph.h 
-├── docker-compose.yml
-├── build.sh          # Development build script
-└── run.sh            # Development run script
+├── backend/                    # FastAPI backend
+│   ├── main.py                # Main API endpoints and PDDL processing
+│   ├── requirements.txt       # Python dependencies
+│   ├── Dockerfile            # Backend container configuration
+│   └── out_graphs/           # Generated graph JSON files
+├── frontend/                  # Vue.js frontend
+│   ├── src/                  # Vue components and application logic
+│   │   ├── components/       # Reusable UI components
+│   │   ├── views/           # Page components
+│   │   └── utils/           # Helper functions
+│   ├── Dockerfile           # Frontend container configuration
+│   ├── nginx.conf           # Nginx reverse proxy configuration
+│   └── package.json         # Node.js dependencies
+├── downward/                  # Modified Fast Downward planner
+│   └── src/search/           # Core search components (modified)
+│       ├── heuristics/
+│       │   ├── domain_transition_graph.h/.cc  # DTG with JSON export
+│       ├── landmarks/
+│       │   ├── landmark_graph.h/.cc           # Landmark graph with JSON export
+│       ├── search_algorithms/
+│       │   ├── graph_only_search.h/.cc        # Custom graph-only search
+│       ├── task_utils/
+│       │   ├── causal_graph.h/.cc             # Causal graph with JSON export
+│       └── utils/
+│           └── json.hpp                       # nlohmann JSON library
+├── docker-compose.yml         # Multi-container orchestration
+├── build.sh                  # Development build script
+└── run.sh                    # Development run script
 ```
 
 ## Contributors
