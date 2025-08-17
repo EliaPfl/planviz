@@ -5,31 +5,27 @@ from datetime import datetime
 from fastapi import FastAPI, HTTPException, UploadFile, status
 from fastapi.responses import PlainTextResponse
 
-# ================================
+# File system configuration
 TEMP_FILE_DIR = "temp_files"
 assert os.path.exists(TEMP_FILE_DIR)
 
 OUT_DIR = "out_graphs"
 assert os.path.exists(OUT_DIR)
 
-FPATH1 = os.path.join(TEMP_FILE_DIR, "f1.pddl")
-FPATH2 = os.path.join(TEMP_FILE_DIR, "f2.pddl")
+FPATH1 = os.path.join(TEMP_FILE_DIR, "f1.pddl")  # Domain file
+FPATH2 = os.path.join(TEMP_FILE_DIR, "f2.pddl")  # Problem file
 LOG_PATH = os.path.join(TEMP_FILE_DIR, "log.txt")
 
-ALGNAME = "graph_only"
+ALGNAME = "graph_only"  # Custom Fast Downward algorithm
 
 DOWNWARD_TIMEOUT = 300  # s
 
-# ================================
-
-
+# Utility functions
 def temp_files() -> list[str]:
     return os.listdir(TEMP_FILE_DIR)
 
-
 def has_pddl_files() -> bool:
     return os.path.exists(FPATH1) and os.path.exists(FPATH2)
-
 
 def cg_path() -> str:
     return os.path.join(OUT_DIR, "causal_graph.json")
@@ -37,16 +33,14 @@ def cg_path() -> str:
 def landmark_path() -> str:
     return os.path.join(OUT_DIR, "landmark_graph.json")
 
-
 def dtg_path(ind: int) -> str:
     return os.path.join(OUT_DIR, f"dtg_{ind}.json")
 
-
-# ================================
+# FastAPI app
 app = FastAPI()
 
-
 async def run_downward() -> bool:
+    """Execute Fast Downward planner with graph-only search"""
     cmd = f"../downward/fast-downward.py {FPATH1} {FPATH2} --search \"{ALGNAME}(\\\"{OUT_DIR}\\\")\""
     proc = await asyncio.create_subprocess_shell(
         cmd,
@@ -58,6 +52,7 @@ async def run_downward() -> bool:
     fine = proc.returncode == 0
     if not fine:
         print(f"ERROR executing {cmd}")
+        # Log error details
         with open(LOG_PATH, "wb") as logfile:
             logfile.write(f"ERROR {datetime.now()}\n".encode())
             logfile.write(b"[stderr]:\n")
@@ -68,6 +63,7 @@ async def run_downward() -> bool:
     return fine
 
 async def identify_pddl_files(file1: UploadFile, file2: UploadFile):
+    """Identify which file is domain vs problem"""
     content1 = await file1.read()
     content2 = await file2.read()
     
@@ -87,8 +83,10 @@ async def identify_pddl_files(file1: UploadFile, file2: UploadFile):
             detail="Could not identify domain and problem files"
         )
 
+# API Endpoints
 @app.post("/upload")
 async def upload_and_execute(files: list[UploadFile]):
+    """Upload PDDL files and run Fast Downward graph generation"""
     if len(files) != 2:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -101,7 +99,6 @@ async def upload_and_execute(files: list[UploadFile]):
         doc.write(await domain.read())
     with open(FPATH2, "wb") as doc:
         doc.write(await problem.read())
-  
 
     action = "Modified" if modifies else "Uploaded"
 
@@ -115,9 +112,9 @@ async def upload_and_execute(files: list[UploadFile]):
 
     return f"{action} PDDL files and ran Fastdownward\n"
 
-
 @app.get("/cg", response_class=PlainTextResponse)
 def causal_graph():
+    """Return causal graph JSON"""
     path = cg_path()
 
     if not os.path.exists(path):
@@ -129,9 +126,9 @@ def causal_graph():
     with open(path, "r", encoding="utf-8") as file:
         return file.read()
 
-
 @app.get("/dtg/{id}", response_class=PlainTextResponse)
 def domain_t_graph(id: int):
+    """Return domain transition graph JSON for variable ID"""
     path = dtg_path(id)
 
     if not os.path.exists(path):
@@ -145,6 +142,7 @@ def domain_t_graph(id: int):
 
 @app.get("/landmark", response_class=PlainTextResponse)
 def landmark_graph():
+    """Return landmark graph JSON"""
     path = landmark_path()
 
     if not os.path.exists(path):
