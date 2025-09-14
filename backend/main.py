@@ -1,6 +1,7 @@
 import asyncio
 import os
 from datetime import datetime
+import sys
 
 from fastapi import FastAPI, HTTPException, UploadFile, status
 from fastapi.responses import PlainTextResponse
@@ -41,13 +42,25 @@ app = FastAPI()
 
 async def run_downward() -> bool:
     """Execute Fast Downward planner with graph-only search"""
-    cmd = f"../downward/fast-downward.py {FPATH1} {FPATH2} --search \"{ALGNAME}(\\\"{OUT_DIR}\\\")\""
-    proc = await asyncio.create_subprocess_shell(
-        cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE)
+    backend_dir = os.path.abspath(os.path.dirname(__file__))
+    script = os.path.abspath(os.path.join(backend_dir, "..", "downward", "fast-downward.py"))
 
+    python_bin = sys.executable or "python3"
+
+    args = [
+        python_bin, script,
+        FPATH1, FPATH2,
+        "--search", f'{ALGNAME}("{OUT_DIR}")'
+    ]
+
+    proc = await asyncio.create_subprocess_exec(
+        *args,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        cwd=backend_dir, 
+    )
     out, err = await proc.communicate()
+
 
     fine = proc.returncode == 0
     if not fine:
