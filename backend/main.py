@@ -64,7 +64,7 @@ async def run_downward() -> bool:
 
     fine = proc.returncode == 0
     if not fine:
-        print(f"ERROR executing {cmd}")
+        print(f"ERROR executing: {' '.join(args)}")
         # Log error details
         with open(LOG_PATH, "wb") as logfile:
             logfile.write(f"ERROR {datetime.now()}\n".encode())
